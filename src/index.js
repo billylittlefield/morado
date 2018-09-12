@@ -1,10 +1,12 @@
-import _ from 'lodash'
+import React from 'react'
+import ReactDOM from 'react-dom'
+import { hot } from 'react-hot-loader'
+import App from 'app'
 
-function component() {
-  let element = document.createElement('div')
-  element.innerHTML = _.join(['Hello', 'Azul'], ' ')
+const production = process.env.NODE_ENV === 'production'
 
-  return element
-}
+const AppToRender = production ? App : hot(module)(App)
 
-document.body.appendChild(component())
+const target = document.getElementById('app')
+
+ReactDOM.render(<AppToRender />, target)
