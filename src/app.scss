@@ -1,0 +1,24 @@
+.scoreboard {
+  width: 640px;
+  height: 320px;
+  margin: 24px auto;
+  background: lightblue;
+}
+
+.side-by-side {
+  display: flex;
+}
+
+.staging-rows {
+  width: 320px;
+  height: 320px;
+  background: #dddddd;
+  margin: 24px auto;
+}
+
+.final-rows {
+  width: 320px;
+  height: 320px;
+  background: gold;
+  margin: 24px auto;
+}
