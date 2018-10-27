@@ -1,23 +1,21 @@
 import React from 'react'
+import Scoreboard from 'components/scoreboard'
+import StagingRows from 'components/staging-rows'
+import FinalRows from 'components/final-rows'
+import DiscardRow from 'components/discard-row'
 import 'app.scss'
 
 const App = () => {
-  const scoreboard = <div class="scoreboard">Scoreboard</div>
-  const stagingRows = <div class="staging-rows">Staging rows</div>
-  const finalRows = <div class="final-rows">Final Rows</div>
-  const discardRow = <div class="discard-row">discard row</div>
-  const factories = <div class="factories">factories</div>
-
   return (
     <>
       <h1>Azul</h1>
       <div>
-        {scoreboard}
+        <Scoreboard />
         <div class="side-by-side">
-          {stagingRows}
-          {finalRows}
+          <StagingRows />
+          <FinalRows />
         </div>
-        {discardRow}
+        <DiscardRow />
       </div>
     </>
   )
