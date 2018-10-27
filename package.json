@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "format": "prettier --write *.* src/*.*",
-    "start": "webpack-serve",
+    "start": "webpack-dev-server",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,11 +28,11 @@
     "prettier": "1.14.2",
     "webpack": "4.17.2",
     "webpack-cli": "3.1.0",
-    "webpack-serve": "2.0.2"
+    "webpack-dev-server": "3.1.10"
   },
   "dependencies": {
     "immer": "1.6.0",
-    "react": "16.5.0",
+    "react": "16.7.0-alpha.0",
     "react-dom": "16.5.0",
     "react-hot-loader": "4.3.6"
   }
