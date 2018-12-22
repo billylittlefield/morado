@@ -2,7 +2,7 @@ import React from 'react'
 
 const DiscardRow = () => {
   return (
-    <div class="discard-row">DiscardRow</div>
+    <div className="discard-row">DiscardRow</div>
   );
 }
 
