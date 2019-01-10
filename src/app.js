@@ -1,12 +1,12 @@
 import React from 'react'
-import GameBoard from 'components/game-board'
+import Azul from 'components/azul'
 import 'app.scss'
 
 const App = () => {
   return (
     <>
       <h1>Azul</h1>
-      <GameBoard />
+      <Azul numPlayers={4}/>
     </>
   )
 }

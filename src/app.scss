@@ -19,7 +19,6 @@
   padding: 10px;
   margin: 10px;
   background: yellow;
-  height: 400px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -31,7 +30,6 @@
   padding: 10px;
   margin: 10px;
   background: green;
-  height: 400px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -70,11 +68,65 @@
   justify-content: flex-end;
 }
 
-
 .square {
   border: 2px solid black;
-  background: lightgray;
   height: 40px;
   width: 40px;
-  margin: 5px;
+  margin: 4px;
+}
+
+// ==============================
+// Factories
+// ==============================
+
+.factory-list {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-content: center;
+  border: 2px solid black;
+}
+
+.factory {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  align-content: center;
+  height: 150px;
+  width: 150px;
+  border: 2px solid black;
+  border-radius: 75px;
+  margin: 10px;
+}
+
+// ==============================
+// TileSquare Styles
+// ==============================
+
+.square {
+  background: lightgray;
+
+  &.selected {
+    box-shadow: magenta 0px 0px 20px;
+  }
+
+  &.tile-snowflake {
+    background: aqua;
+  }
+
+  &.tile-red {
+    background: red;
+  }
+
+  &.tile-blue {
+    background: darkblue;
+  }
+
+  &.tile-black {
+    background: black;
+  }
+
+  &.tile-yellow {
+    background: gold;
+  }
 }
