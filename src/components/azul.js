@@ -1,5 +1,8 @@
 import _ from 'lodash'
 import React from 'react'
+import PropTypes from 'prop-types'
+
+import { Turn, PlayerTurn, FactoryRefill } from 'models/turn'
 import GameBoard from 'components/game-board'
 import { DROPPED_TILE_PENALTIES, TILE_COLORS, NUM_TILES_OF_COLOR } from 'util/game-invariants'
 import { shuffle, getNumFactories } from 'util/game-helpers'
@@ -50,23 +53,18 @@ export default class Azul extends React.Component {
       numPlayers: props.numPlayers,
       hasGameStarted: false,
       hasGameEnded: false,
-      history: [
-        {
-          roundNumber: 1,
-          turnNumber: 1,
-          playerBoards,
-          freshTiles,
-          discardTiles: [],
-          tableTiles: [],
-          factories,
-        },
-      ],
+      roundNumber: 0,
+      turnNumber: 0,
+      gameState: {
+        playerBoards,
+        freshTiles,
+        discardTiles: [],
+        tableTiles: [],
+        factories,
+      },
+      turnHistory: [],
       historyIndex: 0,
     }
-  }
-
-  getCurrentState() {
-    return this.state.history[this.state.historyIndex]
   }
 
   startGame() {
@@ -76,39 +74,31 @@ export default class Azul extends React.Component {
   }
 
   shuffleTiles() {
-    const history = this.state.history.slice(0, this.state.historyIndex + 1)
-    const currentState = history[history.length - 1]
-    shuffle(currentState.freshTiles)
-
-    this.setState({ history })
+    let gameState = this.state.gameState
+    gameState.freshTiles = shuffle(gameState.freshTiles)
+    this.setState({ gameState })
   }
 
   fillFactories() {
-    const history = this.state.history.slice(0, this.state.historyIndex + 1)
-    const { factories, freshTiles, discardTiles } = history[history.length - 1]
-
-    function addTileToFactory(factory) {
-      if (freshTiles.length === 0) {
-        freshTiles = shuffle(discardTiles)
-      }
-      factory.tiles.push(freshTiles.pop())
-    }
-
-    let factoriesFilled = false
-    while (!factoriesFilled) {
-      factories.forEach(factory => {
-        if (factory.tiles.length < 4) {
-          addTileToFactory(factory)
+    let gameState = this.state.gameState
+    
+    gameState.factories.forEach(factory => {
+      _.times(4, () => {
+        if (gameState.freshTiles.length > 0) {
+          factory.tiles.push(gameState.freshTiles.pop())
+        } else {
+          gameState.freshTiles = shuffle(gameState.discardTiles)
         }
       })
+    })
+    
+    let turnHistory = this.state.turnHistory
+    const roundNumber = this.state.roundNumber + 1
+    const factoryRefill = new FactoryRefill({ factories: gameState.factories })
+    turnHistory.push(new Turn(roundNumber, 0, null, factoryRefill))
+    const historyIndex = this.state.historyIndex + 1
 
-      // Exit loop if all factories are full, or if we're out of tiles to fill with
-      factoriesFilled =
-        factories.every(f => f.tiles.length === 4) ||
-        (discardTiles.length === 0 && freshTiles.length === 0)
-    }
-
-    this.setState({ history })
+    this.setState({ gameState, turnHistory, roundNumber, historyIndex })
   }
 
   removeTilesFromFactory(factory, selectedTiles, tableTiles) {
@@ -117,13 +107,13 @@ export default class Azul extends React.Component {
     factory.tiles = []
   }
 
-  addSelectedTilesToRow(selectedTiles, placementRow, brokenTiles, discardTiles) {
-    const numFreeSquaresInRow = placementRow.tiles.filter(t => t === null).length
+  addSelectedTilesToRow(selectedTiles, targetRow, brokenTiles, discardTiles) {
+    const numFreeSquaresInRow = targetRow.tiles.filter(t => t === null).length
     selectedTiles.forEach(tile => {
       // First attempt to add to row
-      let availableIndex = _.indexOf(placementRow.tiles, null)
+      let availableIndex = _.indexOf(targetRow.tiles, null)
       if (availableIndex !== -1) {
-        placementRow.tiles[availableIndex] = tile
+        targetRow.tiles[availableIndex] = tile
         return
       }
 
@@ -139,25 +129,29 @@ export default class Azul extends React.Component {
     })
   }
 
-  takeTurn(playerIndex, factoryIndex, selectedTiles, rowIndex) {
-    const history = this.state.history.slice(0, this.state.historyIndex + 1)
-    let newState = _.cloneDeep(history[history.length - 1])
-    const placementRow = rowIndex === -1 ? 
-      newState.playerBoards[playerIndex].brokenTiles : 
-      newState.playerBoards[playerIndex].stagingRows[rowIndex]
-    const brokenTiles = newState.playerBoards[playerIndex].brokenTiles
-    const factory = newState.factories[factoryIndex]
-    const { tableTiles, discardTiles } = newState
+  takeTurn(playerIndex, factoryId, selectedTiles, targetRowIndex) {
+    let gameState = this.state.gameState
+    const targetRow = targetRowIndex === -1 ? 
+      gameState.playerBoards[playerIndex].brokenTiles : 
+      gameState.playerBoards[playerIndex].stagingRows[targetRowIndex]
+    const brokenTiles = gameState.playerBoards[playerIndex].brokenTiles
+    const factory = gameState.factories[factoryId]
+    const { tableTiles, discardTiles } = gameState
 
     this.removeTilesFromFactory(factory, selectedTiles, tableTiles)
-    this.addSelectedTilesToRow(selectedTiles, placementRow, brokenTiles, discardTiles)
+    this.addSelectedTilesToRow(selectedTiles, targetRow, brokenTiles, discardTiles)
 
-    newState.turnNumber++
-    this.setState({ history: history.concat(newState), historyIndex: this.state.historyIndex + 1 })
+    let turnHistory = this.state.turnHistory
+    const turnNumber = this.state.turnNumber + 1
+    const playerTurn = new PlayerTurn(0, factoryId, selectedTiles[0], selectedTiles.length, targetRowIndex)
+    turnHistory.push(new Turn(this.state.roundNumber, turnNumber, playerTurn, null))
+    const historyIndex = this.state.historyIndex + 1
+
+    this.setState({ gameState, turnHistory, turnNumber, historyIndex })
   }
 
   render() {
-    const currentState = this.state.history[this.state.historyIndex]
+    const gameState = this.state.gameState
     const startGameButton = this.state.hasGameStarted ? null : (
       <button onClick={() => this.startGame()}>Start Game</button>
     )
@@ -166,8 +160,12 @@ export default class Azul extends React.Component {
       <div className="azul">
         Azul
         {startGameButton}
-        <GameBoard {...currentState} takeTurn={this.takeTurn.bind(this)} />
+        <GameBoard {...gameState} takeTurn={this.takeTurn.bind(this)} />
       </div>
     )
   }
+}
+
+Azul.propTypes = {
+  numPlayers: PropTypes.number.isRequired
 }

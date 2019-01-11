@@ -3,20 +3,20 @@ import PlayerBoard from 'components/player-board'
 import FactoryList from 'components/factory-list'
 
 function GameBoard(props) {
-  const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
+  const [selectedfactoryId, setSelectedfactoryId] = useState(null)
   const [selectedTiles, setSelectedTiles] = useState([])
   const [possibleRowPlacements, setPossibleRowPlacements] = useState([])
 
-  function selectTileInFactory(tileColor, factoryIndex) {
-    setSelectedFactoryIndex(factoryIndex)
-    const tileCount = props.factories[factoryIndex].tiles.filter(c => c === tileColor).length
+  function selectTileInFactory(tileColor, factoryId) {
+    setSelectedfactoryId(factoryId)
+    const tileCount = props.factories[factoryId].tiles.filter(c => c === tileColor).length
     setSelectedTiles(Array(tileCount).fill(tileColor))
     setPossibleRowPlacements(getPossibleRowPlacements(tileCount, tileColor))
   }
 
   function selectPlacementRow(rowIndex) {
-    props.takeTurn(0, selectedFactoryIndex, selectedTiles, rowIndex)
-    setSelectedFactoryIndex(null)
+    props.takeTurn(0, selectedfactoryId, selectedTiles, rowIndex)
+    setSelectedfactoryId(null)
     setSelectedTiles([])
     setPossibleRowPlacements([])
   }
@@ -44,10 +44,11 @@ function GameBoard(props) {
       <FactoryList
         onTileSelectedInFactory={selectTileInFactory.bind(this)}
         selectedTileColor={selectedTiles[0] || null}
-        selectedFactoryIndex={selectedFactoryIndex}
+        selectedfactoryId={selectedfactoryId}
         factories={props.factories}
       />
       <PlayerBoard
+        hasPendingSelection={selectedTiles.length !== 0}
         possibleRowPlacements={possibleRowPlacements}
         stagingRows={props.playerBoards[0].stagingRows}
         onRowSelected={selectPlacementRow.bind(this)}
@@ -59,3 +60,15 @@ function GameBoard(props) {
 }
 
 export default GameBoard
+
+
+// GameBoard.propTypes = {
+//   takeTurn: PropTypes.func.isRequired,
+//   roundNumber: PropTypes.number.isRequired,
+//   turnNumber: PropTypes.number.isRequired,
+//   playerBoards: PropTypes.arrayOf(PropTypes.object).isRequired,
+//   factories: PropTypes.arrayOf(PropTypes.object).isRequired,
+//   freshTiles: PropTypes.arrayOf(PropTypes.string).isRequired,
+//   discardTiles: PropTypes.arrayOf(PropTypes.string).isRequired,
+//   tableTiles: PropTypes.arrayOf(PropTypes.string).isRequired
+// }

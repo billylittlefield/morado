@@ -21,9 +21,9 @@ function PlayerBoard(props) {
       <div className="broken-tiles">
         <Row 
           {...props.brokenTiles}
-          canAcceptPendingTiles={true}
+          canAcceptPendingTiles={props.hasPendingSelection}
           rowIndex={-1} 
-          onRowSelected={props.onRowSelected} 
+          onRowSelected={props.onRowSelected}
         />
       </div>
     </div>

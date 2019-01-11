@@ -10,7 +10,7 @@ function Factory(props) {
           key={index}
           bgColor={null}
           tileColor={tileColor}
-          handleClick={() => props.onTileSelectedInFactory(tileColor, props.factoryIndex)}
+          handleClick={() => props.onTileSelectedInFactory(tileColor, props.factoryId)}
         />
       )
     })

@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import Factory from 'components/factory'
 
 function FactoryList(props) {
-  // const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
+  // const [selectedfactoryId, setSelectedfactoryId] = useState(null)
   // const [selectedTileColor, setselectedTileColor] = useState(null)
 
-  // function selectTileInFactory(factoryIndex, tileColor) {
-  //   setSelectedFactoryIndex(factoryIndex)
+  // function selectTileInFactory(factoryId, tileColor) {
+  //   setSelectedfactoryId(factoryId)
   //   setselectedTileColor(tileColor)
   // }
 
@@ -15,9 +15,9 @@ function FactoryList(props) {
       return (
         <Factory
           key={index}
-          factoryIndex={index}
+          factoryId={index}
           tiles={factory.tiles}
-          isFactorySelected={index === props.selectedFactoryIndex}
+          isFactorySelected={index === props.selectedfactoryId}
           selectedTileColor={props.selectedTileColor}
           onTileSelectedInFactory={props.onTileSelectedInFactory}
         />
