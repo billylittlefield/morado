@@ -13,10 +13,18 @@ function PlayerBoard(props) {
           rows={props.stagingRows}
           onRowSelected={props.onRowSelected}
         />
-        <RowList isStaging={false} rows={props.finalRows} />
+        <RowList
+          isStaging={false}
+          rows={props.finalRows}
+        />
       </div>
       <div className="broken-tiles">
-        <Row {...props.brokenTiles} />
+        <Row 
+          {...props.brokenTiles}
+          canAcceptPendingTiles={true}
+          rowIndex={-1} 
+          onRowSelected={props.onRowSelected} 
+        />
       </div>
     </div>
   )

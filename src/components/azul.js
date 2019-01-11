@@ -117,13 +117,13 @@ export default class Azul extends React.Component {
     factory.tiles = []
   }
 
-  addSelectedTilesToRow(selectedTiles, stagingRow, brokenTiles, discardTiles) {
-    const numFreeSquaresInRow = stagingRow.tiles.filter(t => t === null).length
+  addSelectedTilesToRow(selectedTiles, placementRow, brokenTiles, discardTiles) {
+    const numFreeSquaresInRow = placementRow.tiles.filter(t => t === null).length
     selectedTiles.forEach(tile => {
       // First attempt to add to row
-      let availableIndex = _.indexOf(stagingRow.tiles, null)
+      let availableIndex = _.indexOf(placementRow.tiles, null)
       if (availableIndex !== -1) {
-        stagingRow.tiles[availableIndex] = tile
+        placementRow.tiles[availableIndex] = tile
         return
       }
 
@@ -142,13 +142,15 @@ export default class Azul extends React.Component {
   takeTurn(playerIndex, factoryIndex, selectedTiles, rowIndex) {
     const history = this.state.history.slice(0, this.state.historyIndex + 1)
     let newState = _.cloneDeep(history[history.length - 1])
-    const stagingRow = newState.playerBoards[playerIndex].stagingRows[rowIndex]
+    const placementRow = rowIndex === -1 ? 
+      newState.playerBoards[playerIndex].brokenTiles : 
+      newState.playerBoards[playerIndex].stagingRows[rowIndex]
     const brokenTiles = newState.playerBoards[playerIndex].brokenTiles
     const factory = newState.factories[factoryIndex]
     const { tableTiles, discardTiles } = newState
 
     this.removeTilesFromFactory(factory, selectedTiles, tableTiles)
-    this.addSelectedTilesToRow(selectedTiles, stagingRow, brokenTiles, discardTiles)
+    this.addSelectedTilesToRow(selectedTiles, placementRow, brokenTiles, discardTiles)
 
     newState.turnNumber++
     this.setState({ history: history.concat(newState), historyIndex: this.state.historyIndex + 1 })

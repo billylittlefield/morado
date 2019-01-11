@@ -14,13 +14,11 @@ function GameBoard(props) {
     setPossibleRowPlacements(getPossibleRowPlacements(tileCount, tileColor))
   }
 
-  function selectStagingRow(rowIndex) {
-    if (possibleRowPlacements) {
-      props.takeTurn(0, selectedFactoryIndex, selectedTiles, rowIndex)
-      setSelectedFactoryIndex(null)
-      setSelectedTiles([])
-      setPossibleRowPlacements([])
-    }
+  function selectPlacementRow(rowIndex) {
+    props.takeTurn(0, selectedFactoryIndex, selectedTiles, rowIndex)
+    setSelectedFactoryIndex(null)
+    setSelectedTiles([])
+    setPossibleRowPlacements([])
   }
 
   // Map each staging row to whether or not it can accept the pending selection
@@ -52,7 +50,7 @@ function GameBoard(props) {
       <PlayerBoard
         possibleRowPlacements={possibleRowPlacements}
         stagingRows={props.playerBoards[0].stagingRows}
-        onRowSelected={selectStagingRow.bind(this)}
+        onRowSelected={selectPlacementRow.bind(this)}
         finalRows={props.playerBoards[0].finalRows}
         brokenTiles={props.playerBoards[0].brokenTiles}
       />
