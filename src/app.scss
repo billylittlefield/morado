@@ -23,6 +23,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+
+  .row {
+    flex-direction: row-reverse;
+  }
 }
 
 .final-rows {
@@ -66,6 +70,10 @@
 .row {
   display: flex;
   justify-content: flex-end;
+
+  &.active {
+    box-shadow: magenta 0px 0px 20px;
+  }
 }
 
 .square {
@@ -85,6 +93,7 @@
   justify-content: center;
   align-content: center;
   border: 2px solid black;
+  margin-bottom: 50px;
 }
 
 .factory {
