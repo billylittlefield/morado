@@ -1,29 +1,32 @@
 import React, { useState } from 'react'
-import PlayerBoard from 'components/player-board'
-import FactoryList from 'components/factory-list'
+import PlayerBoard from 'components/presentation/PlayerBoard'
+import FactoryList from 'components/presentation/FactoryList'
 
-function GameBoard(props) {
-  const [selectedfactoryId, setSelectedfactoryId] = useState(null)
+const GameBoard = ({ playerBoards, factories, tableTiles, pullTiles, stageTiles }) => {
+  const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
   const [selectedTiles, setSelectedTiles] = useState([])
   const [possibleRowPlacements, setPossibleRowPlacements] = useState([])
 
-  function selectTileInFactory(tileColor, factoryId) {
-    setSelectedfactoryId(factoryId)
-    const tileCount = props.factories[factoryId].tiles.filter(c => c === tileColor).length
+  function selectTileInFactory(tileColor, factoryIndex) {
+    const tileSet = factoryIndex !== -1 ? factories[factoryIndex] : tableTiles
+    const tileCount = tileSet.filter(c => c === tileColor).length
+    setSelectedFactoryIndex(factoryIndex)
     setSelectedTiles(Array(tileCount).fill(tileColor))
     setPossibleRowPlacements(getPossibleRowPlacements(tileCount, tileColor))
   }
 
   function selectPlacementRow(rowIndex) {
-    props.takeTurn(0, selectedfactoryId, selectedTiles, rowIndex)
-    setSelectedfactoryId(null)
+    pullTiles({ factoryIndex: selectedFactoryIndex, tileColor: selectedTiles[0] })
+    stageTiles({ playerIndex: 0, selectedTiles, targetRowIndex: rowIndex })
+
+    setSelectedFactoryIndex(null)
     setSelectedTiles([])
     setPossibleRowPlacements([])
   }
 
   // Map each staging row to whether or not it can accept the pending selection
   function getPossibleRowPlacements(tileCount, tileColor) {
-    return props.playerBoards[0].stagingRows.map(row => {
+    return playerBoards[0].stagingRows.map(row => {
       // If the staging row is already full
       if (row.tiles.filter(t => t !== null).length === row.rowSize) {
         return false
@@ -44,23 +47,23 @@ function GameBoard(props) {
       <FactoryList
         onTileSelectedInFactory={selectTileInFactory.bind(this)}
         selectedTileColor={selectedTiles[0] || null}
-        selectedfactoryId={selectedfactoryId}
-        factories={props.factories}
+        selectedFactoryIndex={selectedFactoryIndex}
+        factories={factories}
+        tableTiles={tableTiles}
       />
       <PlayerBoard
         hasPendingSelection={selectedTiles.length !== 0}
         possibleRowPlacements={possibleRowPlacements}
-        stagingRows={props.playerBoards[0].stagingRows}
+        stagingRows={playerBoards[0].stagingRows}
         onRowSelected={selectPlacementRow.bind(this)}
-        finalRows={props.playerBoards[0].finalRows}
-        brokenTiles={props.playerBoards[0].brokenTiles}
+        finalRows={playerBoards[0].finalRows}
+        brokenTiles={playerBoards[0].brokenTiles}
       />
     </div>
   )
 }
 
 export default GameBoard
-
 
 // GameBoard.propTypes = {
 //   takeTurn: PropTypes.func.isRequired,

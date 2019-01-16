@@ -1,5 +1,5 @@
 import React from 'react'
-import Row from 'components/row'
+import Row from 'components/presentation/Row'
 
 function RowList(props) {
   function renderRowList(rows) {
@@ -9,7 +9,6 @@ function RowList(props) {
         <Row
           key={index}
           rowIndex={index}
-          onRowSelected={props.onRowSelected}
           canAcceptPendingTiles={canAcceptPendingTiles}
           onRowSelected={props.onRowSelected}
           {...row}

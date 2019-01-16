@@ -1,5 +1,5 @@
 import React from 'react'
-import TileSquare from 'components/tile-square'
+import TileSquare from 'components/presentation/TileSquare'
 
 function Factory(props) {
   function renderTilesInFactory(tileColors) {
@@ -10,7 +10,7 @@ function Factory(props) {
           key={index}
           bgColor={null}
           tileColor={tileColor}
-          handleClick={() => props.onTileSelectedInFactory(tileColor, props.factoryId)}
+          handleClick={() => props.onTileSelectedInFactory(tileColor, props.factoryIndex)}
         />
       )
     })

@@ -1,6 +1,8 @@
 import React from 'react'
-import Row from 'components/row'
-import RowList from 'components/row-list'
+
+import { DROPPED_TILE_PENALTIES } from 'util/game-invariants'
+import Row from 'components/presentation/Row'
+import RowList from 'components/presentation/RowList'
 
 function PlayerBoard(props) {
   return (
@@ -13,16 +15,14 @@ function PlayerBoard(props) {
           rows={props.stagingRows}
           onRowSelected={props.onRowSelected}
         />
-        <RowList
-          isStaging={false}
-          rows={props.finalRows}
-        />
+        <RowList isStaging={false} rows={props.finalRows} />
       </div>
       <div className="broken-tiles">
-        <Row 
-          {...props.brokenTiles}
+        <Row
+          tiles={props.brokenTiles}
+          rowSize={DROPPED_TILE_PENALTIES.length}
+          rowIndex={-1}
           canAcceptPendingTiles={props.hasPendingSelection}
-          rowIndex={-1} 
           onRowSelected={props.onRowSelected}
         />
       </div>

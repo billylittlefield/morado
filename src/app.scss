@@ -96,15 +96,25 @@
   margin-bottom: 50px;
 }
 
-.factory {
+.factory,
+.table-tiles {
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
   align-content: center;
+  border: 2px solid black;
+}
+
+.factory {
   height: 150px;
   width: 150px;
-  border: 2px solid black;
   border-radius: 75px;
+  margin: 10px;
+}
+
+.table-tiles {
+  height: 300px;
+  width: 300px;
   margin: 10px;
 }
 
