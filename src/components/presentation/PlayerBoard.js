@@ -7,11 +7,10 @@ import RowList from 'components/presentation/RowList'
 function PlayerBoard(props) {
   return (
     <div className="player-board">
-      Player Board
       <div className="rows-container">
         <RowList
           isStaging={true}
-          possibleRowPlacements={props.possibleRowPlacements}
+          possibleRowPlacements={props.isActive ? props.possibleRowPlacements : null}
           rows={props.stagingRows}
           onRowSelected={props.onRowSelected}
         />
@@ -22,7 +21,7 @@ function PlayerBoard(props) {
           tiles={props.brokenTiles}
           rowSize={DROPPED_TILE_PENALTIES.length}
           rowIndex={-1}
-          canAcceptPendingTiles={props.hasPendingSelection}
+          canAcceptPendingTiles={props.hasPendingSelection && props.isActive}
           onRowSelected={props.onRowSelected}
         />
       </div>

@@ -4,7 +4,8 @@ import Row from 'components/presentation/Row'
 function RowList(props) {
   function renderRowList(rows) {
     return rows.map((row, index) => {
-      let canAcceptPendingTiles = props.isStaging && props.possibleRowPlacements[index]
+      let canAcceptPendingTiles =
+        props.isStaging && props.possibleRowPlacements && props.possibleRowPlacements[index]
       return (
         <Row
           key={index}

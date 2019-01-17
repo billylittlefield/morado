@@ -124,6 +124,7 @@
 
 .square {
   background: lightgray;
+  opacity: 0.5;
 
   &.selected {
     box-shadow: magenta 0px 0px 20px;
@@ -131,21 +132,46 @@
 
   &.tile-snowflake {
     background: aqua;
+    opacity: 1
+  }
+
+  &.bg-snowflake {
+    background: aqua;
   }
 
   &.tile-red {
+    background: red;
+    opacity: 1;
+  }
+
+  &.bg-red {
     background: red;
   }
 
   &.tile-blue {
     background: darkblue;
+    opacity: 1;
+  }
+
+  &.bg-blue {
+    background: darkblue;
   }
 
   &.tile-black {
+    background: black;
+    opacity: 1;
+  }
+
+  &.bg-black {
     background: black;
   }
 
   &.tile-yellow {
     background: gold;
+    opacity: 1;
+  }
+
+  &.bg-yellow {
+    background: yellow;
   }
 }

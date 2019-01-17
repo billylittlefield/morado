@@ -13,7 +13,7 @@ export const POINTS_FOR_COMPLETING_COLOR = 10
 
 export const DROPPED_TILE_PENALTIES = [1, 1, 2, 2, 2, 3, 3]
 
-export const COLOR_TEMPLATE = [
+export const REQUIRED_ORDER = [
   ['blue', 'yellow', 'red', 'black', 'snowflake'],
   ['snowflake', 'blue', 'yellow', 'red', 'black'],
   ['black', 'snowflake', 'blue', 'yellow', 'red'],

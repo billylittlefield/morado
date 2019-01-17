@@ -1,25 +1,15 @@
 import {
-  SHUFFLE_TILES,
-  PULL_TILES,
-  STAGE_TILES,
-  TRANSFER_TILES_TO_FINAL_ROWS,
   REFILL_FACTORIES,
+  PULL_AND_STAGE_TILES,
+  TRANSFER_TILES_TO_FINAL_ROWS,
 } from 'redux/actionTypes'
 
-export function shuffleTiles(payload) {
-  return { type: SHUFFLE_TILES, payload }
+export function refillFactories(payload) {
+  return { type: REFILL_FACTORIES, payload }
 }
 
-export function refillFactories() {
-  return { type: REFILL_FACTORIES }
-}
-
-export function pullTiles(payload) {
-  return { type: PULL_TILES, payload }
-}
-
-export function stageTiles(payload) {
-  return { type: STAGE_TILES, payload }
+export function pullAndStageTiles(payload) {
+  return { type: PULL_AND_STAGE_TILES, payload }
 }
 
 export function transferTiles(payload) {

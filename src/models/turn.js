@@ -1,31 +1,32 @@
-export class Turn {
-  constructor(round, turn, playerTurn, factoryRefill) {
+export class PlayerTurn {
+  constructor(round, turn, playerIndex, factoryIndex, tileColor, targetRowIndex) {
+    this.turnType = "TILE_PULL"
     this.round = round
     this.turn = turn
-    this.playerTurn = playerTurn
-    this.factoryRefill = factoryRefill
-    this.tileTransfers = factoryRefill
-  }
-}
-
-export class PlayerTurn {
-  constructor(playerId, factoryIndex, tileColor, tileCount, targetRowIndex) {
-    this.playerId = playerId
+    this.playerIndex = playerIndex
     this.factoryIndex = factoryIndex
     this.tileColor = tileColor
-    this.tileCount = tileCount
     this.targetRowIndex = targetRowIndex
   }
 }
 
 export class FactoryRefill {
-  constructor(factories) {
+  constructor(round, turn, factories) {
+    this.turnType = "FACTORY_REFILL"
+    this.round = round
+    this.turn = turn
     this.factories = factories
   }
 }
 
 export class TileTransfer {
-  constructor(transfers) {
-    this.transfers = transfers
+  constructor(round, turn, playerIndex, rowIndex, columnIndex, tileColor) {
+    this.turnType = "TILE_TRANSFER"
+    this.round = round
+    this.turn = turn
+    this.playerIndex = playerIndex
+    this.rowIndex = rowIndex
+    this.columnIndex = columnIndex
+    this.tileColor = tileColor
   }
 }

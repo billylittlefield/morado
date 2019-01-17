@@ -1,17 +1,20 @@
 import produce from 'immer'
+import _ from 'lodash'
 
-import { shuffle } from 'util/game-helpers'
-import { TILE_COLORS, NUM_TILES_OF_COLOR, GET_FACTORY_COUNT, DROPPED_TILE_PENALTIES } from 'util/game-invariants'
 import {
-  SHUFFLE_TILES,
+  TILE_COLORS,
+  NUM_TILES_OF_COLOR,
+  DROPPED_TILE_PENALTIES,
+  REQUIRED_ORDER,
+} from 'util/game-invariants'
+import {
   REFILL_FACTORIES,
-  PULL_TILES,
-  STAGE_TILES,
+  PULL_AND_STAGE_TILES,
   TRANSFER_TILES_TO_FINAL_ROWS,
 } from 'redux/actionTypes'
 
 const initialState = {
-  playerBoards: [createNewPlayerBoard(0), createNewPlayerBoard(1)],
+  playerBoards: [createNewPlayerBoard(0, true), createNewPlayerBoard(1, true)],
   freshTiles: Array(TILE_COLORS.length * NUM_TILES_OF_COLOR)
     .fill()
     .map((_, index) => {
@@ -22,9 +25,15 @@ const initialState = {
     .map(() => []),
   discardTiles: [],
   tableTiles: [],
+  round: 0,
+  turn: 0,
+  haveTableTilesBeenPulled: false,
+  turnHistory: [],
+  historyIndex: 0,
+  activePlayerIndex: 0,
 }
 
-function createNewPlayerBoard(playerId) {
+function createNewPlayerBoard(playerId, useRequiredOrder) {
   return {
     playerId,
     stagingRows: Array(5)
@@ -35,59 +44,58 @@ function createNewPlayerBoard(playerId) {
     finalRows: Array(5)
       .fill()
       .map((_, index) => {
-        return { tiles: Array(5).fill(null), rowSize: 5, requiredOrder: null }
+        const requiredOrder = useRequiredOrder ? REQUIRED_ORDER[index] : null
+        return { tiles: Array(5).fill(null), rowSize: 5, requiredOrder }
       }),
-    brokenTiles: Array(DROPPED_TILE_PENALTIES.length).fill(null)
+    brokenTiles: Array(DROPPED_TILE_PENALTIES.length).fill(null),
+    isFirstPlayerNextRound: false,
   }
 }
 
 export default function(state = initialState, action) {
   return produce(state, draft => {
     switch (action.type) {
-      case SHUFFLE_TILES: {
-        draft.freshTiles = shuffle(draft.freshTiles)
-      }
-
       case REFILL_FACTORIES: {
-        shuffle(draft.freshTiles)
-        draft.factories.forEach((factory, factoryIndex) => {
-          while (factory.length < 4) {
-            if (draft.freshTiles.length === 0) {
-              if (draft.discardTiles.length === 0) {
-                return
-              }
-              draft.freshTiles === shuffle(draft.discardTiles)
-              draft.discardTiles = []
-            }
-
-            factory.push(draft.freshTiles.pop())
-          }
-        })
+        draft.factories = action.payload.factories
+        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), action.payload]
+        draft.historyIndex++
         draft.round++
-        draft.turn = 0
+        draft.turn = 1
         break
       }
 
-      case PULL_TILES: {
-        const { factoryIndex, tileColor } = action.payload
+      case PULL_AND_STAGE_TILES: {
+        const { playerIndex, factoryIndex, tileColor, targetRowIndex } = action.payload
+        const board = draft.playerBoards[playerIndex]
+        let selectedTiles, leftoverTiles
+
+        // Tiles pulled from table tiles:
         if (factoryIndex === -1) {
-          draft.tableTiles = draft.tableTiles.filter(t => t !== tileColor)
+          // If first player to pull from table, give them the first_player token
+          if (draft.haveTableTilesBeenPulled === false) {
+            draft.haveTableTilesBeenPulled = true
+            const availableIndex = board.brokenTiles.indexOf(null)
+            if (availableIndex !== -1) {
+              board.brokenTiles[availableIndex] = 'first_player'
+            }
+            board.isFirstPlayerNextRound = true
+          }
+          ;[selectedTiles, leftoverTiles] = _.partition(draft.tableTiles, t => t === tileColor)
+          draft.tableTiles = leftoverTiles
+
+          // Tiles pulled from factory
         } else {
-          const leftoverTiles = draft.factories[factoryIndex].filter(t => t !== tileColor)
+          ;[selectedTiles, leftoverTiles] = _.partition(
+            draft.factories[factoryIndex],
+            t => t === tileColor
+          )
           draft.tableTiles = draft.tableTiles.concat(leftoverTiles)
           draft.factories[factoryIndex] = []
         }
-        break
-      }
 
-      case STAGE_TILES: {
-        const { playerIndex, selectedTiles, targetRowIndex } = action.payload
-
-        selectedTiles.forEach(tile => {
+        ;(selectedTiles || []).forEach(tile => {
           let targetRow =
-            targetRowIndex !== -1
-              ? draft.playerBoards[playerIndex].stagingRows[targetRowIndex].tiles
-              : draft.playerBoards[playerIndex].brokenTiles
+            targetRowIndex !== -1 ? board.stagingRows[targetRowIndex].tiles : board.brokenTiles
           let availableIndex = targetRow.indexOf(null)
 
           if (availableIndex !== -1) {
@@ -95,7 +103,7 @@ export default function(state = initialState, action) {
             return
           }
 
-          targetRow = draft.playerBoards[playerIndex].brokenTiles
+          targetRow = board.brokenTiles
           availableIndex = targetRow.indexOf(null)
           if (availableIndex !== -1) {
             targetRow[availableIndex] = tile
@@ -104,17 +112,32 @@ export default function(state = initialState, action) {
 
           draft.discardTiles.push(tile)
         })
+        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), action.payload]
+        draft.historyIndex++
+        draft.turn++
+        draft.activePlayerIndex = (draft.activePlayerIndex + 1) % draft.playerBoards.length
         break
       }
 
       case TRANSFER_TILES_TO_FINAL_ROWS: {
-        const { playerIndex, rowIndex, columnIndex } = action.payload
+        const transfers = action.payload
 
-        const board = draft.playerBoards[playerIndex]
-        const color = board.stagingRows[rowIndex].tiles[0]
+        transfers.forEach(transfer => {
+          const { playerIndex, rowIndex, columnIndex, tileColor } = transfer
+          const board = draft.playerBoards[playerIndex]
 
-        board.finalRows[rowIndex].tiles[columnIndex] = color
-        draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(color))
+          board.finalRows[rowIndex].tiles[columnIndex] = tileColor
+          board.stagingRows[rowIndex].tiles = Array(rowIndex + 1).fill(null)
+          draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(tileColor))
+        })
+        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), ...transfers]
+        draft.historyIndex += transfers.length
+        draft.playerBoards.forEach(board => {
+          draft.discardTiles = draft.discardTiles.concat(
+            board.brokenTiles.filter(t => t !== 'first_player')
+          )
+          board.brokenTiles = Array(DROPPED_TILE_PENALTIES.length).fill(null)
+        })
         break
       }
     }
