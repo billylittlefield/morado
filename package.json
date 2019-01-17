@@ -42,7 +42,9 @@
     "react-dom": "16.7.0-alpha.0",
     "react-hot-loader": "4.3.6",
     "react-redux": "^6.0.0",
+    "reduce-reducers": "^0.4.3",
     "redux": "^4.0.1",
+    "redux-actions": "^2.6.4",
     "redux-undo": "^0.6.1"
   }
 }

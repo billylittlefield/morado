@@ -1,5 +1,6 @@
 import produce from 'immer'
 import _ from 'lodash'
+import { handleActions } from 'redux-actions'
 
 import {
   TILE_COLORS,
@@ -12,6 +13,9 @@ import {
   PULL_AND_STAGE_TILES,
   TRANSFER_TILES_TO_FINAL_ROWS,
 } from 'redux/actionTypes'
+import handlePullAndStageTiles from 'redux/reducers/handlePullAndStageTiles'
+import handleFactoryRefill from 'redux/reducers/handleFactoryRefill'
+import handleTileTransfers from 'redux/reducers/handleTileTransfers'
 
 const initialState = {
   playerBoards: [createNewPlayerBoard(0, true), createNewPlayerBoard(1, true)],
@@ -52,94 +56,12 @@ function createNewPlayerBoard(playerId, useRequiredOrder) {
   }
 }
 
-export default function(state = initialState, action) {
-  return produce(state, draft => {
-    switch (action.type) {
-      case REFILL_FACTORIES: {
-        draft.factories = action.payload.factories
-        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), action.payload]
-        draft.historyIndex++
-        draft.round++
-        draft.turn = 1
-        break
-      }
+export default (state = initialState, action) => {
+  const reducer = handleActions({
+    PULL_AND_STAGE_TILES: handlePullAndStageTiles,
+    REFILL_FACTORIES: handleFactoryRefill,
+    TRANSFER_TILES_TO_FINAL_ROWS: handleTileTransfers
+  }, state)
 
-      case PULL_AND_STAGE_TILES: {
-        const { playerIndex, factoryIndex, tileColor, targetRowIndex } = action.payload
-        const board = draft.playerBoards[playerIndex]
-        let selectedTiles, leftoverTiles
-
-        // Tiles pulled from table tiles:
-        if (factoryIndex === -1) {
-          // If first player to pull from table, give them the first_player token
-          if (draft.haveTableTilesBeenPulled === false) {
-            draft.haveTableTilesBeenPulled = true
-            const availableIndex = board.brokenTiles.indexOf(null)
-            if (availableIndex !== -1) {
-              board.brokenTiles[availableIndex] = 'first_player'
-            }
-            board.isFirstPlayerNextRound = true
-          }
-          ;[selectedTiles, leftoverTiles] = _.partition(draft.tableTiles, t => t === tileColor)
-          draft.tableTiles = leftoverTiles
-
-          // Tiles pulled from factory
-        } else {
-          ;[selectedTiles, leftoverTiles] = _.partition(
-            draft.factories[factoryIndex],
-            t => t === tileColor
-          )
-          draft.tableTiles = draft.tableTiles.concat(leftoverTiles)
-          draft.factories[factoryIndex] = []
-        }
-
-        ;(selectedTiles || []).forEach(tile => {
-          let targetRow =
-            targetRowIndex !== -1 ? board.stagingRows[targetRowIndex].tiles : board.brokenTiles
-          let availableIndex = targetRow.indexOf(null)
-
-          if (availableIndex !== -1) {
-            targetRow[availableIndex] = tile
-            return
-          }
-
-          targetRow = board.brokenTiles
-          availableIndex = targetRow.indexOf(null)
-          if (availableIndex !== -1) {
-            targetRow[availableIndex] = tile
-            return
-          }
-
-          draft.discardTiles.push(tile)
-        })
-        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), action.payload]
-        draft.historyIndex++
-        draft.turn++
-        draft.activePlayerIndex = (draft.activePlayerIndex + 1) % draft.playerBoards.length
-        break
-      }
-
-      case TRANSFER_TILES_TO_FINAL_ROWS: {
-        const transfers = action.payload
-
-        transfers.forEach(transfer => {
-          const { playerIndex, rowIndex, columnIndex, tileColor } = transfer
-          const board = draft.playerBoards[playerIndex]
-
-          board.finalRows[rowIndex].tiles[columnIndex] = tileColor
-          board.stagingRows[rowIndex].tiles = Array(rowIndex + 1).fill(null)
-          draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(tileColor))
-        })
-        draft.turnHistory = [...draft.turnHistory.slice(0, draft.historyIndex), ...transfers]
-        draft.historyIndex += transfers.length
-        draft.playerBoards.forEach(board => {
-          draft.discardTiles = draft.discardTiles.concat(
-            board.brokenTiles.filter(t => t !== 'first_player')
-          )
-          board.brokenTiles = Array(DROPPED_TILE_PENALTIES.length).fill(null)
-        })
-        break
-      }
-    }
-  })
+  return reducer(state, action)
 }
