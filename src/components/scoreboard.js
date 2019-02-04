@@ -1,9 +1,7 @@
 import React from 'react'
 
 const Scoreboard = () => {
-  return (
-    <div class="scoreboard">Scoreboard</div>
-  );
+  return <div className="scoreboard">Scoreboard</div>
 }
 
-export default Scoreboard;
+export default Scoreboard

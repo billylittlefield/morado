@@ -2,7 +2,7 @@ import React from 'react'
 
 const FinalRows = () => {
   return (
-    <div class="final-rows">FinalRows</div>
+    <div className="final-rows">FinalRows</div>
   );
 }
 
