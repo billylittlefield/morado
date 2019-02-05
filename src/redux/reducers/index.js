@@ -1,5 +1,3 @@
-import produce from 'immer'
-import _ from 'lodash'
 import { handleActions } from 'redux-actions'
 
 import {
@@ -14,8 +12,8 @@ import {
   TRANSFER_TILES_TO_FINAL_ROWS,
 } from 'redux/actionTypes'
 import handlePullAndStageTiles from 'redux/reducers/handlePullAndStageTiles'
-import handleFactoryRefill from 'redux/reducers/handleFactoryRefill'
-import handleTileTransfers from 'redux/reducers/handleTileTransfers'
+import handleRefillFactories from 'redux/reducers/handleRefillFactories'
+import handleTransferTiles from 'redux/reducers/handleTransferTiles'
 
 const initialState = {
   playerBoards: [createNewPlayerBoard(0, true), createNewPlayerBoard(1, true)],
@@ -59,8 +57,8 @@ function createNewPlayerBoard(playerId, useRequiredOrder) {
 export default (state = initialState, action) => {
   const reducer = handleActions({
     PULL_AND_STAGE_TILES: handlePullAndStageTiles,
-    REFILL_FACTORIES: handleFactoryRefill,
-    TRANSFER_TILES_TO_FINAL_ROWS: handleTileTransfers
+    REFILL_FACTORIES: handleRefillFactories,
+    TRANSFER_TILES_TO_FINAL_ROWS: handleTransferTiles
   }, state)
 
   return reducer(state, action)

@@ -2,6 +2,7 @@ export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 4
 
 export const TILE_COLORS = ['blue', 'yellow', 'red', 'black', 'snowflake']
+export const FIRST_PLAYER_TOKEN = 'first_player_token'
 export const NUM_TILES_OF_COLOR = 20
 
 export const TILES_PER_FACTORY = 4

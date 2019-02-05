@@ -1,6 +1,6 @@
-import { handleAction } from 'redux-actions'
 import produce from 'immer'
-import { PULL_AND_STAGE_TILES } from 'redux/actionTypes'
+
+import { FIRST_PLAYER_TOKEN } from 'util/game-invariants'
 
 const handlePullAndStageTiles = (state, action) => {
   return produce(state, draft => {
@@ -8,22 +8,22 @@ const handlePullAndStageTiles = (state, action) => {
     const board = draft.playerBoards[playerIndex]
     let selectedTiles, leftoverTiles
 
-    // Tiles pulled from table tiles:
     if (factoryIndex === -1) {
-      // If first player to pull from table, give them the first_player token
+      // Tiles pulled from table tiles
       if (draft.haveTableTilesBeenPulled === false) {
+        // If first player to pull from table, give them the first player token
         draft.haveTableTilesBeenPulled = true
         const availableIndex = board.brokenTiles.indexOf(null)
         if (availableIndex !== -1) {
-          board.brokenTiles[availableIndex] = 'first_player'
+          board.brokenTiles[availableIndex] = FIRST_PLAYER_TOKEN
         }
         board.isFirstPlayerNextRound = true
       }
       ;[selectedTiles, leftoverTiles] = _.partition(draft.tableTiles, t => t === tileColor)
       draft.tableTiles = leftoverTiles
 
-      // Tiles pulled from factory
     } else {
+      // Tiles pulled from factory
       ;[selectedTiles, leftoverTiles] = _.partition(
         draft.factories[factoryIndex],
         t => t === tileColor
@@ -33,18 +33,19 @@ const handlePullAndStageTiles = (state, action) => {
     }
 
     ;(selectedTiles || []).forEach(tile => {
+      // Find target staging row from index. If the index is -1, use broken tile row.
       let targetRow =
         targetRowIndex !== -1 ? board.stagingRows[targetRowIndex].tiles : board.brokenTiles
-      let availableIndex = targetRow.indexOf(null)
+      let firstAvailableTileIndex = targetRow.indexOf(null)
 
-      if (availableIndex !== -1) {
-        targetRow[availableIndex] = tile
+      if (firstAvailableTileIndex !== -1) {
+        targetRow[firstAvailableTileIndex] = tile
         return
       }
 
       targetRow = board.brokenTiles
-      availableIndex = targetRow.indexOf(null)
-      if (availableIndex !== -1) {
+      firstAvailableTileIndex = targetRow.indexOf(null)
+      if (firstAvailableTileIndex !== -1) {
         targetRow[availableIndex] = tile
         return
       }

@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import _ from 'lodash'
 
 import GameBoard from 'components/presentation/GameBoard'
 import { shuffle } from 'util/game-helpers'

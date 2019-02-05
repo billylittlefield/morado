@@ -130,9 +130,14 @@
     box-shadow: magenta 0px 0px 20px;
   }
 
+  &.tile-first_player_token {
+    background: white;
+    opacity: 1;
+  }
+
   &.tile-snowflake {
     background: aqua;
-    opacity: 1
+    opacity: 1;
   }
 
   &.bg-snowflake {
