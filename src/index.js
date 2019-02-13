@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { hot } from 'react-hot-loader'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
-import undoable from 'redux-undo'
+import axios from 'axios'
 
 import rootReducer from 'redux/reducers'
 import App from 'app'
@@ -14,7 +14,10 @@ const AppToRender = production ? App : hot(module)(App)
 
 const target = document.getElementById('app')
 
-const store = createStore(undoable(rootReducer))
+const store = createStore(rootReducer)
+
+axios.defaults.baseURL = 'http://localhost:3000'
+axios.defaults.withCredentials = true
 
 ReactDOM.render(
   <Provider store={store}>

@@ -1,27 +1,33 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import React from 'react'
+import { connect } from 'react-redux'
 
-import AzulContainer from 'components/containers/AzulContainer'
+import AzulContainer from 'components/container/AzulContainer'
+import HeaderContainer from 'components/container/HeaderContainer'
+import Lobby from 'components/presentation/Lobby'
 import 'app.scss'
 
-const getData = async setData => {
-  const result = await axios('https://nodejs-express-6gk9khaop.now.sh/')
-  setData(result.data)
+const mapStateToProps = state => {
+  return { ...state }
 }
 
-const App = () => {
-  const [data, setData] = useState('')
-
-  useEffect(() => {
-    getData(setData)
-  }, [])
-
+const App = props => {
+  
+  let componentToRender
+  if (props.user.isLoggedIn) {
+    if (props.activeGame) {
+      componentToRender = <AzulContainer hasGameStarted={false} numPlayers={4} useColorTemplate={false}/>
+    } else {
+      componentToRender = <Lobby />
+    }
+  }
+  
   return (
     <>
       <h1>Azul</h1>
-      <AzulContainer hasGameStarted={false} numPlayers={4} useColorTemplate={false} />
+      <HeaderContainer user={props.user} />
+      {componentToRender}
     </>
   )
 }
 
-export default App
+export default connect(mapStateToProps)(App)

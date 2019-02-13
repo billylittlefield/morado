@@ -1,13 +1,28 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import _ from 'lodash'
 
+import { subscribeToGame } from 'api/azul'
 import GameBoard from 'components/presentation/GameBoard'
 import { shuffle } from 'util/game-helpers'
 import { REQUIRED_ORDER } from 'util/game-invariants'
 import { PlayerTurn, FactoryRefill, TileTransfer } from 'models/turn'
 
 export default class Azul extends React.Component {
+  componentDidUpdate() {
+    if (this.isRoundOver()) {
+      this.transferTiles()
+      this.refillFactories()
+    }
+  }
+
+  startGame() {
+    subscribeToGame((err, gameState) => {
+      console.log(gameState);
+      
+    })
+    this.refillFactories()
+  }
+
   refillFactories() {
     const shuffledFreshTiles = shuffle(this.props.freshTiles.slice())
     const shuffledDiscardTiles = shuffle(this.props.discardTiles.slice())
@@ -45,8 +60,6 @@ export default class Azul extends React.Component {
     )
     this.props.pullAndStageTiles(gameAction)
   }
-
-
 
   transferTiles() {
     let transfers = []
@@ -89,18 +102,11 @@ export default class Azul extends React.Component {
     return _.every(this.props.factories, ['length', 0]) && this.props.tableTiles.length === 0
   }
 
-  componentDidUpdate() {
-    if (this.isRoundOver()) {
-      this.transferTiles()
-      this.refillFactories()
-    }
-  }
-
   render() {
     return (
       <div className="azul">
         Azul
-        <button onClick={() => this.refillFactories()}>Start Game</button>
+        <button onClick={() => this.startGame()}>Start Game</button>
         <GameBoard
           round={this.props.round}
           turn={this.props.turn}
@@ -115,8 +121,4 @@ export default class Azul extends React.Component {
       </div>
     )
   }
-}
-
-Azul.propTypes = {
-  numPlayers: PropTypes.number.isRequired,
 }
