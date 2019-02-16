@@ -2,7 +2,8 @@ import React, { useState } from 'react'
 import PlayerBoard from 'components/presentation/PlayerBoard'
 import FactoryList from 'components/presentation/FactoryList'
 
-const GameBoard = ({ round, turn, playerBoards, activePlayerIndex, factories, tableTiles, pullAndStageTiles }) => {
+const GameBoard = props => {
+  const { players, activeSeatIndex, factories, tableTiles, pullAndStageTiles } = props
   const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
   const [selectedTiles, setSelectedTiles] = useState([])
   const [possibleRowPlacements, setPossibleRowPlacements] = useState([])
@@ -16,10 +17,10 @@ const GameBoard = ({ round, turn, playerBoards, activePlayerIndex, factories, ta
   }
 
   function selectPlacementRow(rowIndex) {
-    pullAndStageTiles({ 
+    pullAndStageTiles({
       factoryIndex: selectedFactoryIndex,
       tileColor: selectedTiles[0],
-      targetRowIndex: rowIndex
+      targetRowIndex: rowIndex,
     })
 
     setSelectedFactoryIndex(null)
@@ -29,7 +30,7 @@ const GameBoard = ({ round, turn, playerBoards, activePlayerIndex, factories, ta
 
   // Map each staging row to whether or not it can accept the pending selection
   function getPossibleRowPlacements(tileColor) {
-    return playerBoards[activePlayerIndex].stagingRows.map((row, rowIndex) => {
+    return players[activeSeatIndex].stagingRows.map((row, rowIndex) => {
       // If the staging row is already full
       if (row.tiles.filter(t => t !== null).length === row.rowSize) {
         return false
@@ -41,19 +42,17 @@ const GameBoard = ({ round, turn, playerBoards, activePlayerIndex, factories, ta
       }
 
       // If the corresponding final row already contains that color
-      if (playerBoards[activePlayerIndex].finalRows[rowIndex].tiles.includes(tileColor)) {
+      if (players[activeSeatIndex].finalRows[rowIndex].tiles.includes(tileColor)) {
         return false
       }
 
       return true
     })
   }
-  
+
   return (
     <div className="game-board">
       Game Board
-      <div>Round: {round}</div>
-      <div>Turn: {turn}</div>
       <FactoryList
         onTileSelectedInFactory={selectTileInFactory.bind(this)}
         selectedTileColor={selectedTiles[0] || null}
@@ -61,17 +60,17 @@ const GameBoard = ({ round, turn, playerBoards, activePlayerIndex, factories, ta
         factories={factories}
         tableTiles={tableTiles}
       />
-      {playerBoards.map((playerBoard, index) => {
+      {players.map((player, index) => {
         return (
           <PlayerBoard
             key={index}
-            isActive={activePlayerIndex === index}
+            isActive={activeSeatIndex === player.seatIndex}
             hasPendingSelection={selectedTiles.length !== 0}
             possibleRowPlacements={possibleRowPlacements}
-            stagingRows={playerBoard.stagingRows}
+            stagingRows={player.stagingRows}
             onRowSelected={selectPlacementRow.bind(this)}
-            finalRows={playerBoard.finalRows}
-            brokenTiles={playerBoard.brokenTiles}
+            finalRows={player.finalRows}
+            brokenTiles={player.brokenTiles}
           />
         )
       })}

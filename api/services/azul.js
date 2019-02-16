@@ -1,4 +1,9 @@
-const { TILE_COLORS, NUM_TILES_OF_COLOR, DROPPED_TILE_PENALTIES, REQUIRED_ORDER } = require('../util/game-invariants')
+const {
+  TILE_COLORS,
+  NUM_TILES_OF_COLOR,
+  DROPPED_TILE_PENALTIES,
+  REQUIRED_ORDER,
+} = require('../util/game-invariants')
 
 function getInitialGameState() {
   const initialState = {

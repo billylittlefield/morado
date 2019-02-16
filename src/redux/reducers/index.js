@@ -1,9 +1,11 @@
 import { combineReducers } from 'redux'
 
-import user from 'redux/reducers/user'
-import azul from 'redux/reducers/azul'
+import userReducer from 'redux/reducers/user'
+import gameReducer from 'redux/reducers/game'
+import allGamesReducer from 'redux/reducers/allGames'
 
 export default combineReducers({
-  user,
-  azul
+  user: userReducer,
+  currentGame: gameReducer,
+  allGames: allGamesReducer
 })

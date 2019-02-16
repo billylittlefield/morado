@@ -4,6 +4,7 @@ const path = require('path')
 const devConfig = () => {
   return {
     mode: 'development',
+    context: path.resolve(__dirname),
     module: {
       rules: [
         {
@@ -38,7 +39,14 @@ const devConfig = () => {
       }),
     ],
     resolve: {
-      modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+      modules: [
+        path.resolve(__dirname, 'src'),
+        path.resolve(__dirname, 'shared'),
+        'node_modules',
+      ],
+      alias: {
+        '@shared': path.resolve(__dirname, 'shared')
+      }
     },
   }
 }

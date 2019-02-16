@@ -4,7 +4,7 @@ import { refillFactories, pullAndStageTiles, transferTiles } from 'redux/actions
 import Azul from 'components/presentation/Azul'
 
 const mapStateToProps = state => {
-  return { ...state.azul }
+  return { ...state.currentGame.gameState }
 }
 
 const mapDispatchToProps = dispatch => {

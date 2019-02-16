@@ -1,31 +1,49 @@
-const moment = require('moment')
-const db = require('../db')
 
-function validateUser(socket) {
-  const session = socket.request.session
-  
-  if (!session.userInfo) {
-    socket.emit('sessionExpired')
-    socket.disconnect()
+module.exports = io => {
+  const GameController = require('../controllers/game')
+
+  function validateUser(socket) {
+    const session = socket.request.session
+    
+    if (!session.userInfo) {
+      socket.emit('sessionExpired')
+      socket.disconnect()
+    }
   }
-}
+  
+  async function joinGame(socket, gameId, userInfo) {
+    socket.join(`azul:${gameId}`)
+    let gameState
+    try {
+      gameState = await GameController.getGameState(gameId)
+    } catch (err) {
+      throw err
+    }
+    socket.emit('gameUpdate', gameId, 'azul', gameState)
 
-function findOrCreateNewGame() {
-  const games = await db('games')
-    .select('games.id')
-    .where('games.start_time', null)
-    .andWhere('games.title', 'azul')
-    .join('game_plays', 'games.id', 'game_plays.game_id')
-    .havingRaw('count(*) < 4')
-    .groupBy('games.id')
-}
+    io.in(`azul:${gameId}`).emit('userJoined', userInfo)
+  }
 
-function GameService(socket) {
-  socket.on('queueToPlay', () => {
-    validateUser(socket)
-    console.log(`User is queued for a game of Azul`)
-    findOrCreateNewGame()
-  })
-}
+  function GameService(socket) {
+    socket.on('queueToPlay', async () => {
+      const userInfo = socket.request.session.userInfo
+      validateUser(socket)
 
-module.exports = GameService
+      let gameId
+      try {
+        gameId = await GameController.joinAvailableGame(userInfo)
+      } catch (err) {
+        throw err
+      }      
+      joinGame(socket, gameId, userInfo)
+    })
+
+    socket.on('joinGame', gameId => {
+      const userInfo = socket.request.session.userInfo
+      validateUser(socket)
+      joinGame(socket, gameId, userInfo)
+    })
+  }
+
+  return GameService
+}

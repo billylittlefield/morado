@@ -14,10 +14,10 @@ const App = props => {
   
   let componentToRender
   if (props.user.isLoggedIn) {
-    if (props.activeGame) {
+    if (props.currentGame.gameState !== null) {
       componentToRender = <AzulContainer hasGameStarted={false} numPlayers={4} useColorTemplate={false}/>
     } else {
-      componentToRender = <Lobby />
+      componentToRender = <Lobby userInfo={props.user} />
     }
   }
   

@@ -13,7 +13,7 @@ const users = require('./routes/users')
  * Web socket services
  */
 const io = require('socket.io')(server)
-const gamesService = require('./services/games')
+const gamesService = require('./services/games')(io)
 io.on('connection', gamesService)
 
 /**
@@ -33,7 +33,7 @@ const sessionMiddleware = session({
   saveUninitialized: false,
   resave: false,
   cookie: {
-    maxAge: 5 * 1000,
+    maxAge: 60 * 60 * 1000,
   },
   name: 'session_id',
   domain: 'http://localhost:8080',
@@ -46,12 +46,6 @@ io.use((socket, next) => {
 /**
  * Enable CORS for client requests
  */
-redisClient.on('error', function (err) {
-  console.log('could not establish a connection with redis. ' + err);
-});
-redisClient.on('connect', function (err) {
-  console.log('connected to redis successfully');
-});
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'http://localhost:8080')
   res.header('Vary', 'Origin')
@@ -69,17 +63,17 @@ app.use('/json', () => {})
  * If the user is already logged in, or is attempting to login, continue to appropriate router. 
  * Otherwise, 401 here and do not continue to route.
  */
-app.use((req, res, next) => {
-  if (req.url.startsWith('/auth')) {
-    return next()
-  }
+// app.use((req, res, next) => {
+//   if (req.url.startsWith('/auth')) {
+//     return next()
+//   }
 
-  if (req.session.userInfo) {
-    return next()
-  }
+//   if (req.session.userInfo) {
+//     return next()
+//   }
 
-  res.status(401).end()
-})
+//   res.status(401).end()
+// })
 
 /**
  * =========== ROUTES ===========

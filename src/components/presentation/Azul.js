@@ -1,10 +1,9 @@
 import React from 'react'
 import _ from 'lodash'
 
-import { subscribeToGame } from 'api/azul'
 import GameBoard from 'components/presentation/GameBoard'
-import { shuffle } from 'util/game-helpers'
-import { REQUIRED_ORDER } from 'util/game-invariants'
+// import { shuffle } from 'util/game-helpers'
+import { REQUIRED_ORDER } from '@shared/azul/game-invariants'
 import { PlayerTurn, FactoryRefill, TileTransfer } from 'models/turn'
 
 export default class Azul extends React.Component {
@@ -13,14 +12,6 @@ export default class Azul extends React.Component {
       this.transferTiles()
       this.refillFactories()
     }
-  }
-
-  startGame() {
-    subscribeToGame((err, gameState) => {
-      console.log(gameState);
-      
-    })
-    this.refillFactories()
   }
 
   refillFactories() {
@@ -103,15 +94,15 @@ export default class Azul extends React.Component {
   }
 
   render() {
+    debugger
     return (
       <div className="azul">
-        Azul
-        <button onClick={() => this.startGame()}>Start Game</button>
+        <div>Game: {this.props.options.name}</div>
+        <div>Round: {this.props.roundNumber}</div>
+        <div>Turn: {this.props.turnNumber}</div>
         <GameBoard
-          round={this.props.round}
-          turn={this.props.turn}
-          playerBoards={this.props.playerBoards}
-          activePlayerIndex={this.props.activePlayerIndex}
+          players={this.props.players}
+          activeSeatIndex={this.props.activeSeatIndex}
           freshTiles={this.props.freshTiles}
           factories={this.props.factories}
           discardTiles={this.props.discardTiles}

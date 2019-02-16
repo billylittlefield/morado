@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { DROPPED_TILE_PENALTIES } from 'util/game-invariants'
+import { DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants'
 import Row from 'components/presentation/Row'
 import RowList from 'components/presentation/RowList'
 
