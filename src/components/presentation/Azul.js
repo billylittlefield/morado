@@ -94,7 +94,6 @@ export default class Azul extends React.Component {
   }
 
   render() {
-    debugger
     return (
       <div className="azul">
         <div>Game: {this.props.options.name}</div>

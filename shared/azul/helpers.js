@@ -122,7 +122,6 @@ function applyTilePull(state, action) {
     }
     let selectedTiles, leftoverTiles
 
-    debugger
     if (factoryIndex === -1) {
       // Tiles pulled from table tiles
       if (draft.firstSeatNextRound === null) {
