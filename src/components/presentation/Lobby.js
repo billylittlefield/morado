@@ -1,48 +1,10 @@
 import React from 'react'
-import { connect } from 'react-redux'
-import io from 'socket.io-client'
-import axios from 'axios'
 import _ from 'lodash'
 import moment from 'moment'
 
-import { logout, updateGameStateFromServer, updateAllGamesFromServer } from 'redux/actions'
 
-let socket
-
-class Lobby extends React.Component {
-  componentDidMount() {
-    axios
-      .get(`/users/${this.props.userId}/games`)
-      .then(res => {
-        const { games } = res.data
-        this.props.updateAllGamesFromServer(games)
-      })
-      .catch(err => {
-        throw err
-      })
-  }
-
-  joinGame(gameId) {
-    socket = io.connect('localhost:3000')
-
-    socket.on('sessionExpired', this.props.logout)
-
-    socket.on('userJoined', userInfo => {
-      console.log(`${userInfo.username} has joined the lobby`)
-    })
-
-    socket.on('gameUpdate', (gameId, gameType, gameState) => {
-      this.props.updateGameStateFromServer({ gameId, gameType, gameState })
-    })
-
-    if (gameId === null) {
-      socket.emit('queueToPlay')
-    } else {
-      socket.emit('joinGame', gameId)
-    }
-  }
-
-  renderExistingGames() {
+function Lobby(props) {
+  function renderExistingGames() {
     return (
       <table>
         <thead>
@@ -56,15 +18,15 @@ class Lobby extends React.Component {
           </tr>
         </thead>
         <tbody>
-        {this.props.allGames.map((game, index) => {
+        {props.allGames.map((game, index) => {
           return (
             <tr key={index}>
               <td>{game.options.name}</td>
-              <td>{_.map(game.players, 'username').join(', ')}</td>
-              <td>{game.latestRound}</td>
-              <td>{game.latestTurn + 1}</td>
-              <td>{moment(game.startTime).format('h:ma M/D/YY')}</td>
-              <td><button onClick={() => { this.joinGame(game.gameId) }}>Join</button></td>
+              <td>{game.usernames}</td>
+              <td>{game.currentRound}</td>
+              <td>{game.currentTurn}</td>
+              <td>{game.startTime ? moment(game.startTime).format('h:ma M/D/YY') : 'Not started'}</td>
+              <td><button onClick={() => { props.joinGame(game.id) }}>Resume</button></td>
             </tr>
           )
         })}
@@ -73,28 +35,16 @@ class Lobby extends React.Component {
     )
   }
 
-  render() {
-    return (
-      <section className="lobby">
+  return (
+    <section className="lobby">
         <div className="new-game">
-          Start a new game: <button onClick={this.joinGame}>Join Game</button>
+          Start a new game: <button onClick={() => { props.joinGame() }}>Join Game</button>
         </div>
         <div className="existing-games">
-          Your existing games: {this.renderExistingGames()}
+          Your existing games: {renderExistingGames()}
         </div>
       </section>
-    )
-  }
+  )
 }
 
-function mapStateToProps(state) {
-  return {
-    userId: state.user.userId,
-    allGames: state.allGames,
-  }
-}
-
-export default connect(
-  mapStateToProps,
-  { logout, updateGameStateFromServer, updateAllGamesFromServer }
-)(Lobby)
+export default Lobby

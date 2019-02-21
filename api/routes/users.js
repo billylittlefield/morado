@@ -12,61 +12,58 @@ userRouter.route('/').get((req, res) => {
 })
 
 userRouter.route('/:userId/games').get(async (req, res) => {
-  let games = await db
+  let activeGames = await db
     .select({
-      gameId: 'raw_game_data.game_id',
-      startTime: 'raw_game_data.start_time',
-      options: 'raw_game_data.options',
-      usernames: db.raw('GROUP_CONCAT(DISTINCT raw_game_data.username ORDER BY username)'),
-      userIds: db.raw('GROUP_CONCAT(DISTINCT raw_game_data.user_id ORDER BY username)'),
-      latestRound: db.raw('MAX(raw_game_data.round_number)'),
-      latestTurn: db.raw('MAX(raw_game_data.turn_number)'),
+      id: 'games.id',
+      options: 'games.options',
+      startTime: 'games.start_time',
     })
-    .from(
-      db
-        .select(
-          'game_plays.game_id',
-          'games.start_time',
-          'games.options',
-          'game_plays.user_id',
-          'users.username',
-          'azul_actions.round_number',
-          'azul_actions.turn_number'
-        )
-        .from('games')
-        .join('game_plays', 'game_plays.game_id', 'games.id')
-        .join('azul_actions', 'games.id', 'azul_actions.game_id')
-        .join('users', 'game_plays.user_id', 'users.id')
-        .as('raw_game_data')
-    )
-    .whereIn(
-      'raw_game_data.game_id',
-      db
-        .select('games.id')
-        .from('games')
-        .join('game_plays', 'game_plays.game_id', 'games.id')
-        .where('game_plays.user_id', req.session.userInfo.userId)
-    )
-    .groupBy('raw_game_data.game_id')
+    .from('games')
+    .join('game_plays', 'game_plays.game_id', 'games.id')
+    .where('game_plays.user_id', req.session.userInfo.userId)
 
-  games = games.map(game => {
+  const userInfoByGameId = _.keyBy(
+    await db
+      .select({
+        gameId: 'game_plays.game_id',
+        usernames: db.raw('GROUP_CONCAT(DISTINCT users.username ORDER BY users.username SEPARATOR ", ")'),
+        userIds: db.raw('GROUP_CONCAT(DISTINCT users.id ORDER BY users.id SEPARATOR ", ")'),
+      })
+      .from('game_plays')
+      .join('users', 'game_plays.user_id', 'users.id')
+      .whereIn('game_plays.game_id', activeGames.map(game => game.id))
+      .groupBy('game_plays.game_id'),
+    'gameId'
+  )
+
+  const roundAndTurnInfoByGameId = _.keyBy(
+    await db
+      .select({
+        gameId: 'game_plays.game_id',
+        latestRound: db.raw('MAX(azul_actions.round_number)'),
+        latestTurn: db.raw('MAX(azul_actions.turn_number)'),
+      })
+      .from('game_plays')
+      .join('azul_actions', 'game_plays.game_id', 'azul_actions.game_id')
+      .whereIn('game_plays.game_id', activeGames.map(game => game.id))
+      .groupBy('game_plays.id'),
+    'gameId'
+  )
+
+  const games = activeGames.map(game => {
+    const userInfo = userInfoByGameId[game.id]
+    const roundAndTurnInfo = roundAndTurnInfoByGameId[game.id] || {}
     return {
-      gameId: game.gameId,
-      name: game.name,
+      id: game.id,
       startTime: game.startTime,
       options: JSON.parse(game.options),
-      latestRound: game.latestRound,
-      latestTurn: game.latestTurn,
-      players: _.zipWith(
-        game.userIds.split(','),
-        game.usernames.split(','),
-        (userId, username) => ({
-          userId,
-          username,
-        })
-      ),
+      usernames: userInfo.usernames,
+      userIds: userInfo.userIds,
+      currentRound: roundAndTurnInfo.latestRound || 0,
+      currentTurn: roundAndTurnInfo.latestTurn + 1 || 1
     }
   })
+
 
   res.status(200).json({ games })
 })

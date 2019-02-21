@@ -43,10 +43,9 @@ exports.up = function(knex, Promise) {
         .unsigned()
       table
         .integer('turn_number')
-        .notNullable()
         .unsigned()
-      table.enu('action_type', ['TILE_PULL', 'TILE_TRANSFER', 'FACTORY_REFILL']).notNullable()
-      table.json('action_params').notNullable()
+      table.enu('type', ['TILE_PULL', 'TILE_TRANSFER', 'FACTORY_REFILL']).notNullable()
+      table.json('params').notNullable()
       table.timestamps(true, true)
     }),
   ])

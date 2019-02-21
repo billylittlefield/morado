@@ -1,6 +1,8 @@
 import { handleActions } from 'redux-actions'
 import produce from 'immer'
 
+import { LOGIN, LOGOUT } from 'redux/actionTypes'
+
 const initialState = {
   userId: null,
   username: null,
@@ -26,8 +28,8 @@ function logout(state, action) {
 
 export default (state = initialState, action) => {
   const reducer = handleActions({
-    LOGIN: login,
-    LOGOUT: logout
+    [LOGIN]: login,
+    [LOGOUT]: logout
   }, state)
 
   return reducer(state, action)

@@ -1,3 +1,4 @@
+const { AZUL } = require('../../shared/azul/game-invariants')
 
 module.exports = io => {
   const GameController = require('../controllers/game')
@@ -12,15 +13,24 @@ module.exports = io => {
   }
   
   async function joinGame(socket, gameId, userInfo) {
-    socket.join(`azul:${gameId}`)
     let gameState
     try {
       gameState = await GameController.getGameState(gameId)
     } catch (err) {
       throw err
     }
-    socket.emit('gameUpdate', gameId, 'azul', gameState)
 
+    socket.join(`azul:${gameId}`)
+    socket.on('pullAndStageTiles', async gameAction => {
+      let newState
+      try {
+        newState = await GameController.applyAction(gameId, gameAction)
+      } catch (err) {
+        throw err
+      }
+      io.in(`azul:${gameId}`).emit('gameUpdate', gameId, AZUL, newState)
+    })
+    socket.emit('gameUpdate', gameId, AZUL, gameState)
     io.in(`azul:${gameId}`).emit('userJoined', userInfo)
   }
 

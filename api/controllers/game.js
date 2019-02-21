@@ -39,6 +39,7 @@ function joinAvailableGame(userInfo) {
       gameIdToJoin = (await trx('games').insert({
         title: 'azul',
         options: JSON.stringify({ numPlayers: 4, useColorTemplate: true }),
+        name: 'Game # _'
       }))[0]
     }
 
@@ -73,10 +74,10 @@ async function getGameState(gameId) {
     .orderBy('azul_actions.id')
     .map(action => {
       return {
-        type: action.action_type,
+        type: action.type,
         roundNumber: action.round_number,
         turnNumber: action.turn_number,
-        params: JSON.parse(action.action_params),
+        params: JSON.parse(action.params),
       }
     })
 
@@ -86,7 +87,22 @@ async function getGameState(gameId) {
   return currentState
 }
 
+async function applyAction(gameId, gameAction) {
+  let currentState = await getGameState(gameId)
+  currentState = await AzulHelpers.applyActions(currentState, [ gameAction ])
+
+  await db('azul_actions').insert({
+    game_id: gameId,
+    type: gameAction.type,
+    round_number: gameAction.roundNumber,
+    turn_number: gameAction.turnNumber,
+    params: JSON.stringify(gameAction.params)
+  })
+  return currentState
+}
+
 module.exports = {
   joinAvailableGame,
   getGameState,
+  applyAction
 }

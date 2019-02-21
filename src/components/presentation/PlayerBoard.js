@@ -6,7 +6,7 @@ import RowList from 'components/presentation/RowList'
 
 function PlayerBoard(props) {
   return (
-    <div className="player-board">
+    <div className={`player-board ${props.isOpponentBoard ? 'opponent-board' : 'own-board'}`}>
       <div className="rows-container">
         <RowList
           isStaging={true}

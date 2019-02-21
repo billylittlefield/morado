@@ -1,12 +1,15 @@
-import { UPDATE_ALL_GAMES_FROM_SERVER } from 'redux/actionTypes'
+import { UPDATE_ALL_GAMES_FROM_SERVER, LOGOUT } from 'redux/actionTypes'
 
 const initialState = []
 
 function allGamesReducer(state = initialState, action) {
-  if (action.type === UPDATE_ALL_GAMES_FROM_SERVER) {
-    return action.games
-  } else {
-    return state
+  switch (action.type) {
+    case UPDATE_ALL_GAMES_FROM_SERVER:
+      return action.games
+    case LOGOUT:
+      return initialState
+    default:
+      return state
   }
 }
 

@@ -2,54 +2,85 @@
 // Containers
 // ==============================
 
-.game-board {
+.azul {
   border: 2px solid black;
-  padding: 50px;
+  padding: 24px;
+}
+
+.opponent-list {
+  display: flex;
+  justify-content: space-between;
+  border: 2px solid black;
+  padding: 8px;
 }
 
 .player-board {
-  border: 2px solid black;
-  padding: 50px;
   display: flex;
   flex-direction: column;
-}
-
-.staging-rows {
-  border: 2px solid black;
-  padding: 10px;
-  margin: 10px;
-  background: yellow;
-  width: 100%;
-  display: flex;
-  justify-content: center;
   align-items: center;
 
-  .row {
-    flex-direction: row-reverse;
+  &.own-board {
+    border: 2px solid black;
+    padding: 50px;
+
+    .staging-rows {
+      padding: 10px;
+      margin: 10px;
+      width: 100%;
+    }
+    
+    .final-rows {
+      padding: 10px;
+      margin: 10px;
+      width: 100%;
+    }
+
+    .broken-tiles {
+      padding: 10px;
+      margin: 10px;
+      width: 100%;
+    }
+  }
+
+  &.opponent-board {
+    width: 240px;
+    border: 1px solid black;
+
+    .square {
+      width: 10px;
+      height: 10px;
+    }
+  }
+
+  .staging-rows {
+    border: 2px solid black;
+    background: yellow;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  
+    .row {
+      flex-direction: row-reverse;
+    }
+  }
+  
+  .final-rows {
+    border: 2px solid black;
+    background: green;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .broken-tiles {
+    border: 2px solid black;
+    background: red;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 }
 
-.final-rows {
-  border: 2px solid black;
-  padding: 10px;
-  margin: 10px;
-  background: green;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.broken-tiles {
-  border: 2px solid black;
-  padding: 10px;
-  margin: 10px;
-  background: red;
-  height: 100px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
 
 // ==============================
 // Tile Positioning
@@ -89,15 +120,20 @@
 
 .factory-list {
   display: flex;
-  flex-flow: row wrap;
+  flex-direction: column;
   justify-content: center;
   align-content: center;
   border: 2px solid black;
   margin-bottom: 50px;
 }
 
-.factory,
-.table-tiles {
+.factory-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+}
+
+.factory{
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
@@ -113,9 +149,11 @@
 }
 
 .table-tiles {
-  height: 300px;
-  width: 300px;
-  margin: 10px;
+  border: 1px solid black;
+  padding: 8px;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: left;
 }
 
 // ==============================

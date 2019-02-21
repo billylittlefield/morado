@@ -27,8 +27,8 @@ function getInitialGameState(players, options) {
       .map(() => []),
     discardTiles: [],
     tableTiles: [],
-    roundNumber: 0,
-    turnNumber: 0,
+    currentRoundNumber: 0,
+    currentTurnNumber: 0,
     firstSeatNextRound: null,
     activeSeatIndex: 0,
     actionHistory: [],
@@ -61,13 +61,13 @@ function applyActions(state, actions) {
   actions.forEach(action => {
     switch (action.type) {
       case FACTORY_REFILL:
-        newState = applyFactoryRefill(newState, action)
+        newState = applyFactoryRefill(newState, { payload: action })
         break
       case TILE_PULL:
-        newState = applyTilePull(newState, action)
+        newState = applyTilePull(newState, { payload: action })
         break
       case TILE_TRANSFER:
-        newState = applyTileTransfer(newState, action)
+        newState = applyTileTransfer(newState, { payload: action })
         break
       default:
         throw new Error('Unrecognized Azul action type')
@@ -77,7 +77,7 @@ function applyActions(state, actions) {
 }
 
 function applyFactoryRefill(state, action) {
-  const { roundNumber, turnNumber, params } = action
+  const { roundNumber, turnNumber, params } = action.payload
 
   return produce(state, draft => {
     const tiles = parseTilesFromFactoryCode(params.factoryCode)
@@ -106,13 +106,13 @@ function applyFactoryRefill(state, action) {
       { roundNumber, turnNumber, params },
     ]
     draft.historyIndex++
-    draft.roundNumber = action.roundNumber
-    draft.turnNumber = action.turnNumber + 1
+    draft.currentRoundNumber = roundNumber
+    draft.currentTurnNumber = 1
   })
 }
 
 function applyTilePull(state, action) {
-  const { roundNumber, turnNumber, params } = action
+  const { roundNumber, turnNumber, params } = action.payload
   const { seatIndex, factoryIndex, tileColor, targetRowIndex } = params
 
   return produce(state, draft => {
@@ -170,14 +170,13 @@ function applyTilePull(state, action) {
       { roundNumber, turnNumber, params },
     ]
     draft.historyIndex++
-    draft.roundNumber = action.roundNumber
-    draft.turnNumber = action.turnNumber + 1
+    draft.currentTurnNumber = turnNumber + 1
     draft.activeSeatIndex = (draft.activeSeatIndex + 1) % draft.players.length
   })
 }
 
 function applyTileTransfer(state, action) {
-  const { roundNumber, turnNumber, params } = action
+  const { roundNumber, turnNumber, params } = action.payload
   const { playerIndex, rowIndex, columnIndex, tileColor } = params
 
   return produce(state, draft => {
@@ -191,8 +190,6 @@ function applyTileTransfer(state, action) {
       { roundNumber, turnNumber, params },
     ]
     draft.historyIndex++
-    draft.roundNumber = action.roundNumber + 1
-    draft.turnNumber = 0
   })
 }
 
@@ -223,4 +220,5 @@ function parseTilesFromFactoryCode(factoryCode) {
 module.exports = {
   getInitialGameState,
   applyActions,
+  applyTilePull
 }

@@ -1,4 +1,4 @@
-exports.AZUL = 'AZUL'
+exports.AZUL = 'azul'
 
 exports.MIN_PLAYERS = 2
 exports.MAX_PLAYERS = 4

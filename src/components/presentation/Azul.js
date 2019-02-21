@@ -2,9 +2,8 @@ import React from 'react'
 import _ from 'lodash'
 
 import GameBoard from 'components/presentation/GameBoard'
-// import { shuffle } from 'util/game-helpers'
 import { REQUIRED_ORDER } from '@shared/azul/game-invariants'
-import { PlayerTurn, FactoryRefill, TileTransfer } from 'models/turn'
+import { TileTransfer } from 'models/turn'
 
 export default class Azul extends React.Component {
   componentDidUpdate() {
@@ -12,44 +11,6 @@ export default class Azul extends React.Component {
       this.transferTiles()
       this.refillFactories()
     }
-  }
-
-  refillFactories() {
-    const shuffledFreshTiles = shuffle(this.props.freshTiles.slice())
-    const shuffledDiscardTiles = shuffle(this.props.discardTiles.slice())
-
-    const refilledFactories = this.props.factories.map(() => {
-      const refilledFactory = []
-
-      while (refilledFactory.length < 4) {
-        if (shuffledFreshTiles.length > 0) {
-          refilledFactory.push(shuffledFreshTiles.pop())
-          continue
-        }
-        if (shuffledDiscardTiles.length > 0) {
-          refilledFactory.push(shuffledDiscardTiles.pop())
-          continue
-        }
-        break
-      }
-
-      return refilledFactory
-    })
-
-    const gameAction = new FactoryRefill(this.props.round, this.props.turn, refilledFactories)
-    this.props.refillFactories(gameAction)
-  }
-
-  pullAndStageTiles({ factoryIndex, tileColor, targetRowIndex }) {
-    const gameAction = new PlayerTurn(
-      this.props.round,
-      this.props.turn,
-      this.props.activePlayerIndex,
-      factoryIndex,
-      tileColor,
-      targetRowIndex
-    )
-    this.props.pullAndStageTiles(gameAction)
   }
 
   transferTiles() {
@@ -94,19 +55,22 @@ export default class Azul extends React.Component {
   }
 
   render() {
+    const activePlayer = _.find(this.props.players, ['seatIndex', this.props.activeSeatIndex])
     return (
       <div className="azul">
         <div>Game: {this.props.options.name}</div>
-        <div>Round: {this.props.roundNumber}</div>
-        <div>Turn: {this.props.turnNumber}</div>
+        <div>Round: {this.props.currentRoundNumber}</div>
+        <div>Turn: {this.props.currentTurnNumber}</div>
+        <div>{`${activePlayer.username}'s move`}</div>
         <GameBoard
+          userInfo={this.props.userInfo}
           players={this.props.players}
           activeSeatIndex={this.props.activeSeatIndex}
           freshTiles={this.props.freshTiles}
           factories={this.props.factories}
           discardTiles={this.props.discardTiles}
           tableTiles={this.props.tableTiles}
-          pullAndStageTiles={this.pullAndStageTiles.bind(this)}
+          pullAndStageTiles={this.props.pullAndStageTiles.bind(this)}
         />
       </div>
     )

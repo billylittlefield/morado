@@ -19,23 +19,23 @@ function FactoryList(props) {
   }
 
   function renderTableTiles(tableTiles) {
-    return (
-      <div className="table-tiles">
-        {tableTiles.map((tile, index) => <TileSquare
-          isSelected={props.selectedFactoryIndex === -1 && props.selectedTileColor === tile}
-          key={index}
-          bgColor={null}
-          tileColor={tile}
-          handleClick={() => props.onTileSelectedInFactory(tile, -1)}
-        />)}
-      </div>
-    )
+    return tableTiles.map((tile, index) => <TileSquare
+      isSelected={props.selectedFactoryIndex === -1 && props.selectedTileColor === tile}
+      key={index}
+      bgColor={null}
+      tileColor={tile}
+      handleClick={() => props.onTileSelectedInFactory(tile, -1)}
+    />)
   }
 
   return (
     <div className="factory-list">
-      {renderFactories(props.factories)}
-      {renderTableTiles(props.tableTiles)}
+      <div className="factory-container">
+        {renderFactories(props.factories)}
+      </div>
+      <div className="table-tiles">
+        {renderTableTiles(props.tableTiles)}
+      </div>
     </div>
   )
 }

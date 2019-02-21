@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 
 import AzulContainer from 'components/container/AzulContainer'
 import HeaderContainer from 'components/container/HeaderContainer'
-import Lobby from 'components/presentation/Lobby'
+import LobbyContainer from 'components/container/LobbyContainer'
 import 'app.scss'
 
 const mapStateToProps = state => {
@@ -15,15 +15,14 @@ const App = props => {
   let componentToRender
   if (props.user.isLoggedIn) {
     if (props.currentGame.gameState !== null) {
-      componentToRender = <AzulContainer hasGameStarted={false} numPlayers={4} useColorTemplate={false}/>
+      componentToRender = <AzulContainer userInfo={props.user} socket={props.currentGame.socket} />
     } else {
-      componentToRender = <Lobby userInfo={props.user} />
+      componentToRender = <LobbyContainer userInfo={props.user} />
     }
   }
   
   return (
     <>
-      <h1>Azul</h1>
       <HeaderContainer user={props.user} />
       {componentToRender}
     </>

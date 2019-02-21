@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
 import PlayerBoard from 'components/presentation/PlayerBoard'
 import FactoryList from 'components/presentation/FactoryList'
+import OpponentList from 'components/presentation/OpponentList'
 
-const GameBoard = props => {
+function GameBoard(props) {
   const { players, activeSeatIndex, factories, tableTiles, pullAndStageTiles } = props
   const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
   const [selectedTiles, setSelectedTiles] = useState([])
   const [possibleRowPlacements, setPossibleRowPlacements] = useState([])
+  const opponents = _.reject(props.players, { userId: props.userInfo.userId })
+  const activePlayer = _.find(props.players, { userId: props.userInfo.userId })
 
   function selectTileInFactory(tileColor, factoryIndex) {
+    if (activePlayer.seatIndex !== activeSeatIndex) {
+      return
+    }
+
     const tileSet = factoryIndex !== -1 ? factories[factoryIndex] : tableTiles
     const tileCount = tileSet.filter(c => c === tileColor).length
     setSelectedFactoryIndex(factoryIndex)
@@ -52,28 +59,27 @@ const GameBoard = props => {
 
   return (
     <div className="game-board">
-      Game Board
       <FactoryList
+        isActive={activeSeatIndex === activePlayer.seatIndex}
         onTileSelectedInFactory={selectTileInFactory.bind(this)}
         selectedTileColor={selectedTiles[0] || null}
         selectedFactoryIndex={selectedFactoryIndex}
         factories={factories}
         tableTiles={tableTiles}
       />
-      {players.map((player, index) => {
-        return (
-          <PlayerBoard
-            key={index}
-            isActive={activeSeatIndex === player.seatIndex}
-            hasPendingSelection={selectedTiles.length !== 0}
-            possibleRowPlacements={possibleRowPlacements}
-            stagingRows={player.stagingRows}
-            onRowSelected={selectPlacementRow.bind(this)}
-            finalRows={player.finalRows}
-            brokenTiles={player.brokenTiles}
-          />
-        )
-      })}
+      <OpponentList 
+        activeSeatIndex={activeSeatIndex}
+        opponents={opponents}
+      />
+      <PlayerBoard
+        isActive={activeSeatIndex === activePlayer.seatIndex}
+        hasPendingSelection={selectedTiles.length !== 0}
+        possibleRowPlacements={possibleRowPlacements}
+        stagingRows={activePlayer.stagingRows}
+        onRowSelected={selectPlacementRow.bind(this)}
+        finalRows={activePlayer.finalRows}
+        brokenTiles={activePlayer.brokenTiles}
+      />
     </div>
   )
 }
