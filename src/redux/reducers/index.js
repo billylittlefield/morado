@@ -2,10 +2,10 @@ import { combineReducers } from 'redux'
 
 import userReducer from 'redux/reducers/user'
 import currentGameReducer from 'redux/reducers/currentGame'
-import allGamesReducer from 'redux/reducers/allGames'
+import lobbyReducer from 'redux/reducers/lobby'
 
 export default combineReducers({
   user: userReducer,
   currentGame: currentGameReducer,
-  allGames: allGamesReducer
+  lobby: lobbyReducer,
 })

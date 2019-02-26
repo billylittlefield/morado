@@ -19,9 +19,9 @@ exports.seed = function(knex, Promise) {
         {id: 3, username: 'a', password: bcrypt.hashSync('b', 10)}
       ]),
       knex('games').insert([
-        {id: 1, title: 'azul', options: JSON.stringify({ numPlayers: 2, useColorTemplate: true, name: 'Game number one' }), start_time: new Date() },
-        {id: 2, title: 'azul', options: JSON.stringify({ numPlayers: 2, useColorTemplate: true, name: 'Game number two' }),  },
-        {id: 3, title: 'azul', options: JSON.stringify({ numPlayers: 4, useColorTemplate: true, name: 'Game number three' }),  },
+        {id: 1, options: JSON.stringify({ numPlayers: 2, useColorTemplate: true, name: 'Game number one' }), start_time: new Date() },
+        {id: 2, options: JSON.stringify({ numPlayers: 2, useColorTemplate: true, name: 'Game number two' }),  },
+        {id: 3, options: JSON.stringify({ numPlayers: 4, useColorTemplate: true, name: 'Game number three' }),  },
       ]),
     ]).then(() => {
       return Promise.all([

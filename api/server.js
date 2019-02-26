@@ -5,9 +5,6 @@ const server = require('http').Server(app)
 const redisClient = require('redis').createClient()
 const RedisStore = require('connect-redis')(session);
 
-const auth = require('./routes/auth')
-const games = require('./routes/games')
-const users = require('./routes/users')
 
 /**
  * Web socket services
@@ -78,10 +75,15 @@ app.use('/json', () => {})
 /**
  * =========== ROUTES ===========
  */
+const auth = require('./routes/auth')
+const games = require('./routes/games')
+const users = require('./routes/users')
+const gameplays = require('./routes/gameplays')
 
 app.use('/auth', auth)
 app.use('/games', games)
 app.use('/users', users)
+app.use('/gameplays', gameplays)
 
 server.listen(3000, () => {
   console.log('listening on port 3000')

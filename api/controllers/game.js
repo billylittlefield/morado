@@ -1,61 +1,102 @@
 const db = require('../db')
+const _ = require('lodash')
+
 const AzulHelpers = require('../../shared/azul/helpers')
 
-/**
- * General matchmaking. Perform the following actions wrapped in a transaction:
- *   - find game where start_time is null, less than 4 players have joined, and the user joining is
- *     not already in the game
- *   - if no game exists, create a new one
- *   - create a game_play record for the game and user
- *   - return the game id
- * @public
- * @returns {Promise}
- * @param {Object} userInfo
- * @param {number} userInfo.userId
- */
-function joinAvailableGame(userInfo) {
-  const userId = userInfo.userId
+async function createGame(options) {
+  const gameId = (await db('games').insert({
+    options: JSON.stringify(options),
+  }))[0]
 
-  return db.transaction(async trx => {
-    const availableGame = await trx('games')
-      .first('games.id')
-      .whereNotIn(
-        'games.id',
-        trx('games')
-          .select('games.id')
-          .leftJoin('game_plays', 'games.id', 'game_plays.game_id')
-          .where('game_plays.user_id', userId)
-      )
-      .andWhere('games.start_time', null)
-      .andWhere('games.title', 'azul')
-      .leftJoin('game_plays', 'games.id', 'game_plays.game_id')
-      .havingRaw('count(game_plays.user_id) < 4')
-      .groupBy('games.id')
+  return gameId
+}
 
-    let gameIdToJoin
-    if (availableGame) {
-      gameIdToJoin = availableGame.id
-    } else {
-      gameIdToJoin = (await trx('games').insert({
-        title: 'azul',
-        options: JSON.stringify({ numPlayers: 4, useColorTemplate: true }),
-        name: 'Game # _'
-      }))[0]
-    }
+async function createGamePlay(gameId, userId, seatIndex) {
+  if (!seatIndex) {
+    const playerCountQuery = await db('game_plays')
+      .count({ numPlayers: 'user_id' })
+      .where('game_plays.game_id', gameId)
+      .groupBy('game_plays.game_id')
+    seatIndex = playerCountQuery.length > 0 ? playerCountQuery[0].numPlayers : 0
+  }
+  await db('game_plays').insert({
+    game_id: gameId,
+    user_id: userId,
+    seat_index: seatIndex,
+  })
+}
 
-    const seatIndex = (await trx('game_plays').where('game_id', gameIdToJoin)).length
-    await trx('game_plays').insert({
-      game_id: gameIdToJoin,
-      user_id: userId,
-      seat_index: seatIndex,
+async function fetchGames(isStarted, isFull) {
+  let query = db('games')
+    .select({
+      gameId: 'games.id',
+      numPlayers: db.raw('count(game_plays.user_id)'),
+      maxPlayers: db.raw('json_extract(games.options, "$.numPlayers")'),
     })
+    .leftJoin('game_plays', 'games.id', 'game_plays.game_id')
 
-    return gameIdToJoin
+  if (isStarted) {
+    query.whereNotNull('games.start_time')
+  } else {
+    query.whereNull('games.start_time')
+  }
+
+  let games = await query.groupBy('games.id')
+  let filteredGames = games.filter(game => {
+    return isFull ? game.numPlayers === game.maxPlayers : game.numPlayers < game.maxPlayers
+  })
+
+  return fetchGamesByIds(_.map(filteredGames, 'gameId'))
+}
+
+async function fetchGamesByUserId(userId) {
+  const activeGameIds = _.map(
+    await db
+      .select({ gameId: 'games.id' })
+      .from('games')
+      .join('game_plays', 'game_plays.game_id', 'games.id')
+      .where('game_plays.user_id', userId),
+    'gameId'
+  )
+
+  return fetchGamesByIds(activeGameIds)
+}
+
+async function fetchGamesByIds(gameIds) {
+  let games = db
+    .select({
+      gameId: 'games.id',
+      usernames: db.raw(
+        'GROUP_CONCAT(DISTINCT users.username ORDER BY users.username SEPARATOR ",")'
+      ),
+      userIds: db.raw('GROUP_CONCAT(DISTINCT users.id ORDER BY users.id SEPARATOR ",")'),
+      latestRound: db.raw('MAX(azul_actions.round_number)'),
+      latestTurn: db.raw('MAX(azul_actions.turn_number)'),
+      startTime: 'games.start_time',
+      options: 'games.options',
+    })
+    .from('games')
+    .leftJoin('game_plays', 'games.id', 'game_plays.game_id')
+    .leftJoin('users', 'game_plays.user_id', 'users.id')
+    .leftJoin('azul_actions', 'games.id', 'azul_actions.game_id')
+    .whereIn('games.id', gameIds)
+    .groupBy('games.id')
+
+  return games.map(game => {
+    const usernames = game.usernames ? game.usernames.split(',') : []
+    const userIds = game.userIds ? game.userIds.split(',').map(Number) : []
+    return {
+      ...game,
+      options: JSON.parse(game.options),
+      usernames,
+      userIds,
+    }
   })
 }
 
 async function getGameState(gameId) {
-  const game = (await db.table('games')
+  const game = (await db
+    .table('games')
     .where('id', gameId)
     .map(game => {
       return {
@@ -89,20 +130,23 @@ async function getGameState(gameId) {
 
 async function applyAction(gameId, gameAction) {
   let currentState = await getGameState(gameId)
-  currentState = await AzulHelpers.applyActions(currentState, [ gameAction ])
+  currentState = await AzulHelpers.applyActions(currentState, [gameAction])
 
   await db('azul_actions').insert({
     game_id: gameId,
     type: gameAction.type,
     round_number: gameAction.roundNumber,
     turn_number: gameAction.turnNumber,
-    params: JSON.stringify(gameAction.params)
+    params: JSON.stringify(gameAction.params),
   })
   return currentState
 }
 
 module.exports = {
-  joinAvailableGame,
+  createGame,
+  createGamePlay,
+  fetchGames,
+  fetchGamesByUserId,
   getGameState,
-  applyAction
+  applyAction,
 }

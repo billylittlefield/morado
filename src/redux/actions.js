@@ -5,6 +5,7 @@ import {
   UPDATE_GAME_STATE_FROM_SERVER,
   UPDATE_ALL_GAMES_FROM_SERVER,
   CONNECTED_TO_GAME,
+  RECEIVED_AVAILABLE_GAMES_FROM_SERVER,
 } from 'redux/actionTypes'
 import {
   FACTORY_REFILL,
@@ -24,8 +25,12 @@ export function updateGameStateFromServer(payload) {
   return { type: UPDATE_GAME_STATE_FROM_SERVER, payload }
 } 
 
-export function updateAllGamesFromServer(games) {
-  return { type: UPDATE_ALL_GAMES_FROM_SERVER, games }
+export function updateActiveGamesFromServer(payload) {
+  return { type: UPDATE_ALL_GAMES_FROM_SERVER, payload }
+}
+
+export function receivedAvailableGamesFromServer(payload) {
+  return { type: RECEIVED_AVAILABLE_GAMES_FROM_SERVER, payload }
 }
 
 export function refillFactories(payload) {

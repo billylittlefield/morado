@@ -14,6 +14,7 @@ module.exports = io => {
   
   async function joinGame(socket, gameId, userInfo) {
     let gameState
+    
     try {
       gameState = await GameController.getGameState(gameId)
     } catch (err) {
@@ -35,19 +36,6 @@ module.exports = io => {
   }
 
   function GameService(socket) {
-    socket.on('queueToPlay', async () => {
-      const userInfo = socket.request.session.userInfo
-      validateUser(socket)
-
-      let gameId
-      try {
-        gameId = await GameController.joinAvailableGame(userInfo)
-      } catch (err) {
-        throw err
-      }      
-      joinGame(socket, gameId, userInfo)
-    })
-
     socket.on('joinGame', gameId => {
       const userInfo = socket.request.session.userInfo
       validateUser(socket)

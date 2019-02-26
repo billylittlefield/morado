@@ -16,10 +16,12 @@ function Profile(props) {
   }
 
   return (
-    <>
-      <div>Hello, {user.username}</div>
-      <button onClick={submitLogout}>Logout</button>
-    </>
+    <div className="profile-container">
+      <div className="user-greeting">{user.username}</div>
+      <button className="mdc-button mdc-button--unelevated"onClick={submitLogout}>
+        <span className="mdc-button__label">Logout</span>
+      </button>
+    </div>
   )
 }
 

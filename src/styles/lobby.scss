@@ -1,0 +1,35 @@
+section.lobby {
+  width: 600px;
+  margin: 40px auto;
+  color: #444;
+
+  table { 
+    border-collapse: collapse;
+    border-spacing: 0;
+    width: 100%;
+    background-color: white;
+  }
+
+  table td, table th {
+    border: 1px solid #444;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  table th {
+    font-size: 24px;
+  }
+
+  button {
+    padding: 10px;
+  }
+
+  .new-game-button {
+    display: block;
+    margin: 24px auto;
+  }
+}
+
+.mdc-button:hover::before {
+  opacity: 0.08;
+}

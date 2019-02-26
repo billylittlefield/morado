@@ -1,0 +1,20 @@
+$mdc-theme-primary: #ffc27d;
+$mdc-theme-secondary: #a2d7ff;
+$mdc-theme-on-primary: #444;
+$mdc-theme-on-secondary: #444;
+$mdc-typography-styles-button: (
+  letter-spacing: 0,
+  font-family: 'Hind Madurai',
+  font-weight: lighter,
+  font-size: 14px,
+  text-transform: none,
+);
+
+@import '@material/typography/mdc-typography';
+@import '@material/button/mdc-button';
+
+@import 'nav';
+@import 'main';
+
+@import 'lobby';
+@import 'azul';

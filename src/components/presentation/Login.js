@@ -20,28 +20,46 @@ function Login(props) {
     setPassword('')
   }
 
-  function login() {
+  function login(e) {
+    e.preventDefault()
     props.login(username, password)
     resetFields()
   }
 
+  function signUp(e) {
+    e.preventDefault()
+    
+  }
+
   return (
     <div className="login-container">
-      <input
-        onChange={handleChange}
-        id="username"
-        type="text"
-        value={username}
-        placeholder="Username"
-      />
-      <input
-        onChange={handleChange}
-        id="password"
-        type="password"
-        value={password}
-        placeholder="Password"
-      />
-      <button onClick={login}>Submit</button>
+      <h2>Login</h2>
+      <form>
+        <div>
+          <input
+            onChange={handleChange}
+            id="username"
+            type="text"
+            value={username}
+            placeholder="Username"
+          />
+        </div>
+        <div>
+          <input
+            onChange={handleChange}
+            id="password"
+            type="password"
+            value={password}
+            placeholder="Password"
+          />
+        </div>
+        <div id="new-user-container">
+          <span>New user?</span><a id="sign-up-button" onClick={signUp}>Sign up</a>
+        </div>
+        <div>
+          <button id="login-button" className="mdc-button mdc-button--unelevated" onClick={login}>Submit</button>
+        </div>
+      </form>
     </div>
   )
 }

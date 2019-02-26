@@ -8,29 +8,38 @@ import Azul from 'components/presentation/Azul'
 class AzulContainer extends React.Component {
   pullAndStageTiles(payload) {
     const { factoryIndex, tileColor, targetRowIndex } = payload
-    debugger
+    const { roundNumber, turnNumber, activeSeatIndex } = this.props.gameState
     const gameAction = {
       type: TILE_PULL,
-      roundNumber: this.props.currentRoundNumber,
-      turnNumber: this.props.currentTurnNumber,
+      roundNumber,
+      turnNumber,
       params: {
-        seatIndex: this.props.activeSeatIndex,
+        seatIndex: activeSeatIndex,
         factoryIndex,
         tileColor,
-        targetRowIndex
-      }
+        targetRowIndex,
+      },
     }
+    // Update local state:
     this.props.pullAndStageTiles(gameAction)
+    // Update server state:
     this.props.socket.emit('pullAndStageTiles', gameAction)
   }
-  
+
   render() {
-    return <Azul {...this.props} pullAndStageTiles={this.pullAndStageTiles.bind(this)} />
+    return (
+      <Azul
+        {...this.props.gameState}
+        userInfo={this.props.userInfo}
+        pullAndStageTiles={this.pullAndStageTiles.bind(this)}
+      />
+    )
   }
 }
 
-const mapStateToProps = state => {
-  return { ...state.currentGame.gameState, socket: state.currentGame.socket }
+const mapStateToProps = (state, ownProps) => {
+  const { userInfo, socket } = ownProps
+  return { userInfo, socket, gameState: state.currentGame.gameState }
 }
 
 const mapDispatchToProps = dispatch => {

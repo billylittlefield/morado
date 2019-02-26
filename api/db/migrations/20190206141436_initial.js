@@ -8,7 +8,6 @@ exports.up = function(knex, Promise) {
 
     knex.schema.createTable('games', table => {
       table.increments()
-      table.enu('title', ['azul']).notNullable()
       table.timestamp('start_time').nullable()
       table.json('options').notNullable()
       table.boolean('isComplete').notNullable().defaultTo(false)

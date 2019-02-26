@@ -5,7 +5,13 @@ import axios from 'axios'
 import _ from 'lodash'
 
 import Lobby from 'components/presentation/Lobby'
-import { logout, connectedToGame, updateGameStateFromServer, updateAllGamesFromServer } from 'redux/actions'
+import {
+  logout,
+  connectedToGame,
+  updateGameStateFromServer,
+  updateActiveGamesFromServer,
+  receivedAvailableGamesFromServer,
+} from 'redux/actions'
 
 class LobbyContainer extends React.Component {
   componentDidMount() {
@@ -13,14 +19,23 @@ class LobbyContainer extends React.Component {
       .get(`/users/${this.props.userId}/games`)
       .then(res => {
         const { games } = res.data
-        this.props.updateAllGamesFromServer(games)
+        this.props.updateActiveGamesFromServer({ games })
+      })
+      .catch(err => {
+        throw err
+      })
+
+    axios
+      .get('/games/available')
+      .then(res => {
+        this.props.receivedAvailableGamesFromServer({ games: res.data.games })
       })
       .catch(err => {
         throw err
       })
   }
 
-  joinGame(gameId) {
+  resumeGame(gameId) {
     const socket = io.connect('localhost:3000')
     this.props.connectedToGame({ socket })
 
@@ -32,26 +47,52 @@ class LobbyContainer extends React.Component {
       this.props.updateGameStateFromServer({ gameId, gameType, gameState })
     })
 
-    if (!gameId) {
-      socket.emit('queueToPlay')
-    } else {
-      socket.emit('joinGame', gameId)
-    }
+    socket.emit('joinGame', gameId)
+  }
+
+  async joinGame(gameId) {
+    const userId = this.props.userId
+    await axios.post('/gameplays', { gameId, userId })
+    this.resumeGame(gameId)
+  }
+
+  createGame(name, numPlayers, useColorTemplate) {
+    axios.post('/games', { name, numPlayers, useColorTemplate }).then(res => {
+      const gameId = res.data.gameId
+      this.joinGame(gameId)
+    }).catch(err => {
+      throw err
+    })
   }
 
   render() {
-    return <Lobby allGames={this.props.allGames} joinGame={this.joinGame.bind(this)} />
+    return (
+      <Lobby
+        activeGames={this.props.activeGames}
+        availableGames={this.props.availableGames}
+        joinGame={this.joinGame.bind(this)}
+        createGame={this.createGame.bind(this)}
+        resumeGame={this.resumeGame.bind(this)}
+      />
+    )
   }
 }
 
 function mapStateToProps(state) {
   return {
     userId: state.user.userId,
-    allGames: state.allGames,
+    activeGames: state.lobby.activeGames,
+    availableGames: state.lobby.availableGames,
   }
 }
 
 export default connect(
   mapStateToProps,
-  { logout, connectedToGame, updateGameStateFromServer, updateAllGamesFromServer }
+  {
+    logout,
+    connectedToGame,
+    updateGameStateFromServer,
+    updateActiveGamesFromServer,
+    receivedAvailableGamesFromServer,
+  }
 )(LobbyContainer)

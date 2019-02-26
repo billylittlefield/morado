@@ -3,7 +3,6 @@ import _ from 'lodash'
 
 import GameBoard from 'components/presentation/GameBoard'
 import { REQUIRED_ORDER } from '@shared/azul/game-invariants'
-import { TileTransfer } from 'models/turn'
 
 export default class Azul extends React.Component {
   componentDidUpdate() {
@@ -34,14 +33,14 @@ export default class Azul extends React.Component {
         if (!isSpotFilled) {
           const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
           transfers.push(
-            new TileTransfer(
-              this.props.round,
-              this.props.turn,
-              playerIndex,
-              rowIndex,
-              columnIndex,
-              tileColor
-            )
+            // new TileTransfer(
+            //   this.props.round,
+            //   this.props.turn,
+            //   playerIndex,
+            //   rowIndex,
+            //   columnIndex,
+            //   tileColor
+            // )
           )
         }
       })
@@ -55,13 +54,19 @@ export default class Azul extends React.Component {
   }
 
   render() {
-    const activePlayer = _.find(this.props.players, ['seatIndex', this.props.activeSeatIndex])
+    let nextMoveText;
+    if (this.props.currentRoundNumber === 0 && this.props.currentTurnNumber === 0) {
+      nextMoveText = 'Waiting for game to begin'
+    } else {
+      const activePlayer = _.find(this.props.players, ['seatIndex', this.props.activeSeatIndex])
+      nextMoveText = `${activePlayer.username}'s move`
+    }
     return (
       <div className="azul">
         <div>Game: {this.props.options.name}</div>
         <div>Round: {this.props.currentRoundNumber}</div>
         <div>Turn: {this.props.currentTurnNumber}</div>
-        <div>{`${activePlayer.username}'s move`}</div>
+        <div>{nextMoveText}</div>
         <GameBoard
           userInfo={this.props.userInfo}
           players={this.props.players}

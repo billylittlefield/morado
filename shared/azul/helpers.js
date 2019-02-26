@@ -9,6 +9,7 @@ const {
   DROPPED_TILE_PENALTIES,
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
+  FIRST_PLAYER_TOKEN
 } = require('./game-invariants')
 
 function getInitialGameState(players, options) {
@@ -123,19 +124,19 @@ function applyTilePull(state, action) {
     let selectedTiles, leftoverTiles
 
     if (factoryIndex === -1) {
-      // Tiles pulled from table tiles
+      // PLAYER PULLED FROM TABLE TILES
       if (draft.firstSeatNextRound === null) {
-        // If first player to pull from table, give them the first player token
-        const firstAvailableIndex = player.brokenTiles.indexOf(null)
-        if (firstAvailableIndex !== -1) {
-          player.brokenTiles[firstAvailableIndex] = FIRST_PLAYER_TOKEN
+        // If this is the first player to pull from table tiles, give them the first player token
+        const vacantIndex = player.brokenTiles.indexOf(null)
+        if (vacantIndex !== -1) {
+          player.brokenTiles[vacantIndex] = FIRST_PLAYER_TOKEN
         }
-        draft.firstSeatNextRound = userId
+        draft.firstSeatNextRound = params.seatIndex
       }
       ;[selectedTiles, leftoverTiles] = _.partition(draft.tableTiles, t => t === tileColor)
       draft.tableTiles = leftoverTiles
     } else {
-      // Tiles pulled from factory
+      // PLAYER PULLED FROM FACTORY
       ;[selectedTiles, leftoverTiles] = _.partition(
         draft.factories[factoryIndex],
         t => t === tileColor
@@ -148,21 +149,21 @@ function applyTilePull(state, action) {
       // Find target staging row from index. If the index is -1, use broken tile row.
       let targetRow =
         targetRowIndex !== -1 ? player.stagingRows[targetRowIndex].tiles : player.brokenTiles
-      let firstAvailableTileIndex = targetRow.indexOf(null)
+      let vacantIndex = targetRow.indexOf(null)
 
-      if (firstAvailableTileIndex !== -1) {
-        targetRow[firstAvailableTileIndex] = tile
+      if (vacantIndex !== -1) {
+        targetRow[vacantIndex] = tile
         return
       }
 
       targetRow = player.brokenTiles
-      firstAvailableTileIndex = targetRow.indexOf(null)
-      if (firstAvailableTileIndex !== -1) {
-        targetRow[firstAvailableIndex] = tile
-        return
+      vacantIndex = targetRow.indexOf(null)
+      if (vacantIndex !== -1) {
+        targetRow[vacantIndex] = tile
+      } else {
+        // Player's broken tiles row is full -- discard the tile
+        draft.discardTiles.push(tile)
       }
-
-      draft.discardTiles.push(tile)
     })
 
     draft.actionHistory = [
