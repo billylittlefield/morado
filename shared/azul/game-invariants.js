@@ -8,7 +8,7 @@ exports.FIRST_PLAYER_TOKEN = 'first_player_token'
 exports.NUM_TILES_OF_COLOR = 20
 
 exports.TILES_PER_FACTORY = 4
-exports.GET_FACTORY_COUNT = (numPlayers) => numPlayers * 2 + 1
+exports.GET_FACTORY_COUNT = numPlayers => numPlayers * 2 + 1
 
 exports.POINTS_FOR_COMPLETING_ROW = 2
 exports.POINTS_FOR_COMPLETING_COLUMN = 7

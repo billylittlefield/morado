@@ -1,0 +1,15 @@
+{
+  "name": "azul-shared",
+  "version": "1.0.0",
+  "description": "",
+  "main": "util.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "immer": "^2.0.0",
+    "lodash": "^4.17.11"
+  }
+}

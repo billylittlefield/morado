@@ -9,7 +9,7 @@ const {
   DROPPED_TILE_PENALTIES,
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
-  FIRST_PLAYER_TOKEN
+  FIRST_PLAYER_TOKEN,
 } = require('./game-invariants')
 
 function getInitialGameState(players, options) {
@@ -221,5 +221,5 @@ function parseTilesFromFactoryCode(factoryCode) {
 module.exports = {
   getInitialGameState,
   applyActions,
-  applyTilePull
+  applyTilePull,
 }
