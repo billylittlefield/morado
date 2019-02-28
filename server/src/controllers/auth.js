@@ -17,4 +17,14 @@ export default {
 
     return Promise.resolve({ username: user.username, userId: user.id })
   },
+
+  async createAccount(username, password) {
+    const [existingUser] = await db('users').where('username', username)
+    if (existingUser) {
+      return Promise.reject(new Error('Username already taken'))
+    }
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const [userId] = (await db('users').insert({ username, password: hashedPassword }))
+    return Promise.resolve({ username, userId })
+  }
 }

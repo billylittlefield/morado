@@ -5,8 +5,8 @@ import axios from 'axios'
 import { login } from 'redux/actions'
 import Login from 'components/presentation/Login'
 
-const LoginContainer = props => {
-  const submitLogin = (username, password) => {
+function LoginContainer(props) {
+  function submitLogin(username, password) {
     axios
       .post('/auth/login', {
         username,
@@ -16,12 +16,25 @@ const LoginContainer = props => {
         props.login(res.data)
       })
       .catch(err => {
-        debugger
         throw new Error(err.message)
       })
   }
 
-  return <Login login={submitLogin} />
+  function submitSignup(username, password, confirmPassword) {
+    if (password !== confirmPassword) {
+      throw new Error("Passwords don't match")
+    }
+    axios.post('/auth/signup', {
+      username,
+      password
+    }).then(res => {
+      props.login(res.data)
+    }).catch(err => {
+      throw new Error(err.message)
+    })
+  }
+
+  return <Login login={submitLogin} signup={submitSignup} />
 }
 
 export default connect(
