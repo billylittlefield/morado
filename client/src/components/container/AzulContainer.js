@@ -1,11 +1,40 @@
 import React from 'react'
+import axios from 'axios'
+import io from 'socket.io-client'
 import { connect } from 'react-redux'
 
-import { refillFactories, pullAndStageTiles, transferTiles } from 'redux/actions'
+import { connectedToGame, receiveGameState, refillFactories, pullAndStageTiles, transferTiles } from 'redux/actions'
 import { TILE_PULL } from '@shared/azul/game-invariants'
 import Azul from 'components/presentation/Azul'
 
 class AzulContainer extends React.Component {
+  componentDidMount() {
+    const gameId = this.props.gameId
+
+    // Load game state
+    axios.get(`/games/azul/${gameId}`).then(res => {
+      this.props.receiveGameState({ ...res.data })
+      
+      // Check if the current user is in this game
+      if (_.find(res.data.gameState.players, ['userId', this.props.userInfo.userId])) {
+
+        // If so, setup websocket for game
+        const socket = io.connect('localhost:3000')
+        this.props.connectedToGame({ socket })
+    
+        socket.on('sessionExpired', this.props.logout)
+        socket.on('userJoined', userInfo => {
+          console.log(`${userInfo.username} has joined the lobby`)
+        })
+        socket.on('gameUpdate', (gameId, gameType, gameState) => {
+          this.props.receiveGameState({ gameId, gameType, gameState })
+        })
+    
+        socket.emit('joinGame', gameId)
+      }
+    })
+  }
+  
   pullAndStageTiles(payload) {
     const { factoryIndex, tileColor, targetRowIndex } = payload
     const { roundNumber, turnNumber, activeSeatIndex } = this.props.gameState
@@ -27,6 +56,9 @@ class AzulContainer extends React.Component {
   }
 
   render() {
+    if (!this.props.gameState) {
+      return <div>Loading...</div>
+    }
     return (
       <Azul
         {...this.props.gameState}
@@ -38,19 +70,14 @@ class AzulContainer extends React.Component {
 }
 
 const mapStateToProps = (state, ownProps) => {
-  const { userInfo, socket } = ownProps
-  return { userInfo, socket, gameState: state.currentGame.gameState }
-}
-
-const mapDispatchToProps = dispatch => {
-  return {
-    refillFactories: payload => dispatch(refillFactories(payload)),
-    pullAndStageTiles: payload => dispatch(pullAndStageTiles(payload)),
-    transferTiles: payload => dispatch(transferTiles(payload)),
-  }
+  const userInfo = state.userInfo
+  const socket = state.currentGame.state
+  const gameState = state.currentGame.gameState
+  const gameId = ownProps.match.params.gameId
+  return { userInfo, socket, gameState, gameId }
 }
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  { receiveGameState, connectedToGame, refillFactories, pullAndStageTiles, transferTiles }
 )(AzulContainer)

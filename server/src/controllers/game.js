@@ -26,7 +26,7 @@ async function createGamePlay(gameId, userId, seatIndex) {
   })
 }
 
-async function fetchGames(isStarted, isFull) {
+async function fetchGames({ isStarted, isFull }) {
   let query = db('games')
     .select({
       gameId: 'games.id',

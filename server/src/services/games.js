@@ -10,7 +10,7 @@ function validateUser(socket) {
   }
 }
 
-async function joinGame(socket, gameId, userInfo) {
+async function joinGame(io, socket, gameId, userInfo) {
   let gameState
 
   try {
@@ -38,7 +38,7 @@ export default function(io) {
     socket.on('joinGame', gameId => {
       const userInfo = socket.request.session.userInfo
       validateUser(socket)
-      joinGame(socket, gameId, userInfo)
+      joinGame(io, socket, gameId, userInfo)
     })
   }
 }

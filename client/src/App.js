@@ -1,13 +1,14 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import axios from 'axios'
+import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-dom'
 
-import AzulContainer from 'components/container/AzulContainer'
-import NavContainer from 'components/container/NavContainer'
-import LobbyContainer from 'components/container/LobbyContainer'
-import LoginContainer from 'components/container/LoginContainer'
 import 'app.scss'
 import { login } from 'redux/actions'
+import LobbyRoute from 'components/routes/LobbyRoute'
+import LoginRoute from 'components/routes/LoginRoute'
+import NavbarContainer from 'components/container/NavbarContainer'
+import AzulContainer from 'components/container/AzulContainer'
 
 const mapStateToProps = state => {
   return { ...state }
@@ -15,44 +16,34 @@ const mapStateToProps = state => {
 
 class App extends React.Component {
   componentDidMount() {
-    axios.post('/auth').then(res => {
-      const userInfo = res.data
-      if (userInfo.userId && userInfo.username) {
-        this.props.login(userInfo)
-      }
-    })
+    axios
+      .post('/auth')
+      .then(res => {
+        const userInfo = res.data
+        if (userInfo.userId && userInfo.username) {
+          this.props.login(userInfo)
+        }
+      })
+      .catch(err => {
+        console.log('auth failed')
+      })
   }
 
   render() {
-    let componentToRender
-    if (this.props.user.isLoggedIn) {
-      if (this.props.currentGame.gameState !== null) {
-        componentToRender = (
-          <>
-            <NavContainer user={this.props.user} />
-            <AzulContainer userInfo={this.props.user} socket={this.props.currentGame.socket} />
-          </>
-        )
-      } else {
-        componentToRender = (
-          <>
-            <NavContainer user={this.props.user} />
-            <LobbyContainer />
-          </>
-        )
-      }
-    } else {
-      componentToRender = (
+    return (
+      <Router>
         <>
-          <h1 className="page-title">AZUL Online</h1>
-          <section className="main">
-            <LoginContainer />
-          </section>
+          <NavbarContainer userInfo={this.props.userInfo} />
+          <Switch>
+            <Route exact path="/" render={props => <Redirect to="/login" />} />
+            <Route path="/login" render={props => <LoginRoute userInfo={this.props.userInfo} />} />
+            <Route path="/lobby" component={LobbyRoute} />
+            <Route path="/azul/:gameId" render={routeProps => <AzulContainer {...routeProps} />} />
+            <Redirect to="/lobby" />
+          </Switch>
         </>
-      )
-    }
-
-    return <>{componentToRender}</>
+      </Router>
+    )
   }
 }
 

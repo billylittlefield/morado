@@ -1,10 +1,10 @@
 import {
   LOGIN,
   LOGOUT,
-  UPDATE_GAME_STATE_FROM_SERVER,
   UPDATE_ALL_GAMES_FROM_SERVER,
   CONNECTED_TO_GAME,
   RECEIVED_AVAILABLE_GAMES_FROM_SERVER,
+  GAME_STATE_RECEIVED
 } from 'redux/actionTypes'
 import { FACTORY_REFILL, TILE_PULL, TILE_TRANSFER } from '@shared/azul/game-invariants'
 
@@ -16,8 +16,8 @@ export function logout() {
   return { type: LOGOUT }
 }
 
-export function updateGameStateFromServer(payload) {
-  return { type: UPDATE_GAME_STATE_FROM_SERVER, payload }
+export function receiveGameState(payload) {
+  return { type: GAME_STATE_RECEIVED, payload }
 }
 
 export function updateActiveGamesFromServer(payload) {

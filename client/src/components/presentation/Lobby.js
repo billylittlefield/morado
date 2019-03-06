@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import _ from 'lodash'
 import moment from 'moment'
 import Modal from 'react-modal'
+import { Link } from 'react-router-dom'
 
 function Lobby(props) {
   const [createGameModalIsOpen, setCreateGameModalIsOpen] = useState(false)
@@ -45,13 +46,9 @@ function Lobby(props) {
                   {game.startTime ? moment(game.startTime).format('h:mma M/D/YY') : 'Not started'}
                 </td>
                 <td>
-                  <button
-                    className="mdc-button mdc-button--unelevated"
-                    onClick={() => {
-                      props.resumeGame(game.gameId)
-                    }}>
+                  <Link to={`azul/${game.gameId}`} className="mdc-button mdc-button--unelevated">
                     Resume
-                  </button>
+                  </Link>
                 </td>
               </tr>
             )
@@ -82,13 +79,13 @@ function Lobby(props) {
                 <td>{game.usernames.join(', ') || 'Empty'}</td>
                 <td>{game.options.useColorTemplate ? 'Standard' : 'No template'}</td>
                 <td>
-                  <button
+                  <Link to={`azul/${game.gameId}`}
                     className="mdc-button mdc-button--unelevated"
                     onClick={() => {
                       props.joinGame(game.gameId)
                     }}>
                     Join
-                  </button>
+                  </Link>
                 </td>
               </tr>
             )
@@ -143,7 +140,7 @@ function Lobby(props) {
             <input
               type="number"
               value={newGameSize}
-              onChange={e => setNewGameSize(e.target.value)}
+              onChange={e => setNewGameSize(parseInt(e.target.value))}
               min="2"
               max="4"
               id="new-game-size"

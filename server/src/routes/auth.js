@@ -16,7 +16,7 @@ authRouter.route('/').post((req, res) => {
   if (req.session.userInfo && moment.utc() < req.session.cookie.expires) {
     regenerateSession(req, res, req.session.userInfo)
   } else {
-    res.status(200).end()
+    res.status(401).end()
   }
 })
 

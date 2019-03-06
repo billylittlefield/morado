@@ -1,58 +1,59 @@
 import React from 'react'
 import _ from 'lodash'
+import { Link } from 'react-router-dom'
 
 import GameBoard from 'components/presentation/GameBoard'
 import { REQUIRED_ORDER } from '@shared/azul/game-invariants'
 
 export default class Azul extends React.Component {
-  componentDidUpdate() {
-    if (this.isRoundOver()) {
-      this.transferTiles()
-      this.refillFactories()
-    }
-  }
+  // componentDidUpdate() {
+  //   if (this.isRoundOver()) {
+  //     this.transferTiles()
+  //     this.refillFactories()
+  //   }
+  // }
 
-  transferTiles() {
-    let transfers = []
+  // transferTiles() {
+  //   let transfers = []
 
-    this.props.playerBoards.forEach((playerBoard, playerIndex) => {
-      playerBoard.stagingRows.forEach((stagingRow, rowIndex) => {
-        const isStagingRowFull =
-          stagingRow.rowSize === stagingRow.tiles.filter(t => t !== null).length
-        if (!isStagingRowFull) {
-          return
-        }
+  //   this.props.players.forEach((player, playerIndex) => {
+  //     player.stagingRows.forEach((stagingRow, rowIndex) => {
+  //       const isStagingRowFull =
+  //         stagingRow.rowSize === stagingRow.tiles.filter(t => t !== null).length
+  //       if (!isStagingRowFull) {
+  //         return
+  //       }
 
-        const tileColor = stagingRow.tiles[0]
-        const isStagingRowUniform = _.every(stagingRow.tiles, t => t === tileColor)
-        if (!isStagingRowUniform) {
-          throw new Error('Staging row should only contain 1 color of tile')
-        }
+  //       const tileColor = stagingRow.tiles[0]
+  //       const isStagingRowUniform = _.every(stagingRow.tiles, t => t === tileColor)
+  //       if (!isStagingRowUniform) {
+  //         throw new Error('Staging row should only contain 1 color of tile')
+  //       }
 
-        const isSpotFilled = playerBoard.finalRows[rowIndex].tiles.includes(tileColor)
-        if (!isSpotFilled) {
-          const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
-          transfers
-            .push
-            // new TileTransfer(
-            //   this.props.round,
-            //   this.props.turn,
-            //   playerIndex,
-            //   rowIndex,
-            //   columnIndex,
-            //   tileColor
-            // )
-            ()
-        }
-      })
-    })
+  //       const isSpotFilled = player.finalRows[rowIndex].tiles.includes(tileColor)
+  //       if (!isSpotFilled) {
+  //         const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
+  //         transfers
+  //           .push
+  //           new TileTransfer(
+  //             this.props.round,
+  //             this.props.turn,
+  //             playerIndex,
+  //             rowIndex,
+  //             columnIndex,
+  //             tileColor
+  //           )
+  //           ()
+  //       }
+  //     })
+  //   })
 
-    this.props.transferTiles(transfers)
-  }
+  //   this.props.transferTiles(transfers)
+  // }
 
-  isRoundOver() {
-    return _.every(this.props.factories, ['length', 0]) && this.props.tableTiles.length === 0
-  }
+  // isRoundOver() {
+  //   return _.every(this.props.factories, ['length', 0]) && this.props.tableTiles.length === 0
+  // }
 
   render() {
     let nextMoveText
@@ -64,6 +65,7 @@ export default class Azul extends React.Component {
     }
     return (
       <div className="azul">
+        <Link to="/lobby">Back to Lobby</Link>
         <div>Game: {this.props.options.name}</div>
         <div>Round: {this.props.currentRoundNumber}</div>
         <div>Turn: {this.props.currentTurnNumber}</div>

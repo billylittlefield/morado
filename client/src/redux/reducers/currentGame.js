@@ -1,5 +1,5 @@
 import { AZUL } from '@shared/azul/game-invariants'
-import { UPDATE_GAME_STATE_FROM_SERVER, LOGOUT, CONNECTED_TO_GAME } from 'redux/actionTypes'
+import { GAME_STATE_RECEIVED, LOGOUT, CONNECTED_TO_GAME } from 'redux/actionTypes'
 import azulReducer from 'redux/reducers/games/azul'
 
 const initialState = {
@@ -20,7 +20,7 @@ function getGameReducer(gameType) {
 
 function currentGameReducer(state = initialState, action) {
   switch (action.type) {
-    case UPDATE_GAME_STATE_FROM_SERVER:
+    case GAME_STATE_RECEIVED:
       const { gameId, gameType, gameState } = action.payload
       return { ...state, gameId, gameType, gameState }
     case CONNECTED_TO_GAME:

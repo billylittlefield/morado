@@ -4,7 +4,15 @@ const glob = require('glob')
 
 module.exports = {
   mode: 'development',
+  devServer: {
+    historyApiFallback: true,
+  },
+  entry: './src/index.js',
   context: path.resolve(__dirname),
+  output: {
+    publicPath: '/',
+    filename: 'main.bundle.js',
+  },
   module: {
     rules: [
       {
