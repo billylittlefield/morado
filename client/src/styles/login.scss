@@ -1,27 +1,8 @@
-html, body {
-  height: 100%;
-  width: 100%;
-  padding: 0;
-  margin: 0;
-  font-family: 'Hind Madurai', sans-serif;
-  font-weight: lighter;
-}
 
-body {
-  display: flex;
-
-  #app {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    background-color: #dde9fb;
-
-    h1.page-title {
-      color: #ffa636;
-      font-size: 64px;
-      text-shadow: #509eff 2px 2px 2px;
-    }
-  }
+h1.page-title {
+  color: #ffa636;
+  font-size: 64px;
+  text-shadow: #509eff 2px 2px 2px;
 }
 
 section.login-page-container {
@@ -31,7 +12,7 @@ section.login-page-container {
   top: 15%;
   margin: 0 auto;
 
-  .login-container {
+  .login-form-container {
     margin: auto auto;
     padding: 24px;
     background-color: #7fafff;

@@ -27,7 +27,7 @@ function currentGameReducer(state = initialState, action) {
       const { socket } = action.payload
       return { ...state, socket }
     case LOGOUT:
-      return { ...initialState }
+      return { ...state, socket: null }
     default:
       return {
         ...state,

@@ -81,6 +81,7 @@ async function fetchGamesByIds(gameIds) {
     .leftJoin('azul_actions', 'games.id', 'azul_actions.game_id')
     .whereIn('games.id', gameIds)
     .groupBy('games.id')
+    .orderBy('games.id', 'desc')
 
   return games.map(game => {
     const usernames = game.usernames ? game.usernames.split(',') : []

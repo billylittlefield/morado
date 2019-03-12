@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { Redirect } from 'react-router-dom'
 import axios from 'axios'
 
 import { login } from 'redux/actions'
@@ -34,10 +35,13 @@ function LoginContainer(props) {
     })
   }
 
+  if (props.shouldRedirectToLobby) {
+    return <Redirect to="/lobby" />
+  }
   return <Login login={submitLogin} signup={submitSignup} />
 }
 
 export default connect(
-  null,
+  state => ({ shouldRedirectToLobby: state.userInfo.isLoggedIn }),
   { login }
 )(LoginContainer)

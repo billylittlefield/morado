@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Route, Redirect, Switch } from 'react-router-d
 
 import 'app.scss'
 import { login } from 'redux/actions'
-import LobbyRoute from 'components/routes/LobbyRoute'
-import LoginRoute from 'components/routes/LoginRoute'
-import NavbarContainer from 'components/container/NavbarContainer'
+import Navbar from 'components/presentation/Navbar'
+import LobbyContainer from 'components/container/LobbyContainer'
+import LoginContainer from 'components/container/LoginContainer'
 import AzulContainer from 'components/container/AzulContainer'
 
 const mapStateToProps = state => {
@@ -33,13 +33,21 @@ class App extends React.Component {
     return (
       <Router>
         <>
-          <NavbarContainer userInfo={this.props.userInfo} />
+          <Route path="/" component={Navbar} />
+          <Route path="/" render={routeProps => {
+            // No need to redirect if user is routing to either /login or /azul/:gameid
+            let regex = /\/azul\/\d+|\/login/g
+            if (this.props.userInfo.isLoggedIn || routeProps.location.pathname.match(regex)) {
+              return null
+            } else {
+              return <Redirect to="/login" />
+            }
+          }} />
           <Switch>
-            <Route exact path="/" render={props => <Redirect to="/login" />} />
-            <Route path="/login" render={props => <LoginRoute userInfo={this.props.userInfo} />} />
-            <Route path="/lobby" component={LobbyRoute} />
+            <Route path="/login" component={LoginContainer} />
+            <Route path="/lobby" component={LobbyContainer} />
             <Route path="/azul/:gameId" render={routeProps => <AzulContainer {...routeProps} />} />
-            <Redirect to="/lobby" />
+            <Redirect to="/login" />
           </Switch>
         </>
       </Router>

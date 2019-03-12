@@ -10,11 +10,31 @@ $mdc-typography-styles-button: (
   text-transform: none,
 );
 
+html, body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  font-family: 'Hind Madurai', sans-serif;
+  font-weight: lighter;
+}
+
+body {
+  display: flex;
+
+  #app {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: #dde9fb;
+  }
+}
+
 @import '@material/typography/mdc-typography';
 @import '@material/button/mdc-button';
 
 @import 'nav';
-@import 'main';
+@import 'login';
 
 @import 'lobby';
 @import 'azul';

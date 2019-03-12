@@ -4,7 +4,8 @@ import {
   UPDATE_ALL_GAMES_FROM_SERVER,
   CONNECTED_TO_GAME,
   RECEIVED_AVAILABLE_GAMES_FROM_SERVER,
-  GAME_STATE_RECEIVED
+  GAME_STATE_RECEIVED,
+  NEW_GAME_CREATED
 } from 'redux/actionTypes'
 import { FACTORY_REFILL, TILE_PULL, TILE_TRANSFER } from '@shared/azul/game-invariants'
 
@@ -20,12 +21,16 @@ export function receiveGameState(payload) {
   return { type: GAME_STATE_RECEIVED, payload }
 }
 
-export function updateActiveGamesFromServer(payload) {
+export function receivedActiveGames(payload) {
   return { type: UPDATE_ALL_GAMES_FROM_SERVER, payload }
 }
 
-export function receivedAvailableGamesFromServer(payload) {
+export function receivedAvailableGames(payload) {
   return { type: RECEIVED_AVAILABLE_GAMES_FROM_SERVER, payload }
+}
+
+export function createdNewGame(payload) {
+  return { type: NEW_GAME_CREATED, payload }
 }
 
 export function refillFactories(payload) {

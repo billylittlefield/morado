@@ -64,7 +64,7 @@ export default class Azul extends React.Component {
       nextMoveText = `${activePlayer.username}'s move`
     }
     return (
-      <div className="azul">
+      <section className="azul">
         <Link to="/lobby">Back to Lobby</Link>
         <div>Game: {this.props.options.name}</div>
         <div>Round: {this.props.currentRoundNumber}</div>
@@ -80,7 +80,7 @@ export default class Azul extends React.Component {
           tableTiles={this.props.tableTiles}
           pullAndStageTiles={this.props.pullAndStageTiles.bind(this)}
         />
-      </div>
+      </section>
     )
   }
 }

@@ -5,7 +5,6 @@ import GameController from 'controllers/game'
 const gameRouter = express.Router()
 
 gameRouter.route('/available').get(async (req, res) => {
-  debugger
   const games = await GameController.fetchGames({ isStarted: false, isFull: false })
   const filteredGames = games.filter(game => {
     return !game.userIds.includes(req.session.userInfo.userId)
@@ -19,13 +18,23 @@ gameRouter.route('/').post(async (req, res) => {
   const gameId = await GameController.createGame(options)
   await GameController.createGamePlay(gameId, req.session.userInfo.userId, 0)
 
-  res.status(200).json({ gameId })
+  res
+    .status(200)
+    .json({
+      gameId,
+      usernames: [req.session.userInfo.username],
+      userIds: [req.session.userInfo.userId],
+      latestRound: null,
+      latestTurn: null,
+      startTime: null,
+      options
+    })
 })
 
 gameRouter.route('/azul/:gameId').get(async (req, res) => {
   const gameId = req.params.gameId
   const gameState = await GameController.getGameState(gameId)
-  
+
   res.status(200).json({ gameId, gameState, gameType: 'azul' })
 })
 

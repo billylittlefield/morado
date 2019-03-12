@@ -87,16 +87,19 @@ function Login(props) {
   }
 
   return (
-    <div className="login-container">
-      <h2>{isSigningUp ? "Create account" : "Login"}</h2>
-      <form>
-        {renderUsernameField()}        
-        {renderPasswordField()}
-        {isSigningUp ? renderConfirmPasswordField() : null}
-        {renderSignupOrLoginText()}
-        {renderSubmitButton()}
-      </form>
-    </div>
+    <section className="login-page-container">
+      <h1 className="page-title">AZUL Online</h1>
+      <div className="login-form-container">
+        <h2>{isSigningUp ? "Create account" : "Login"}</h2>
+        <form>
+          {renderUsernameField()}        
+          {renderPasswordField()}
+          {isSigningUp ? renderConfirmPasswordField() : null}
+          {renderSignupOrLoginText()}
+          {renderSubmitButton()}
+        </form>
+      </div>
+    </section>
   )
 }
 

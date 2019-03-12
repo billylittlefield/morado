@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import io from 'socket.io-client'
 import axios from 'axios'
 import _ from 'lodash'
 import { Redirect } from 'react-router-dom'
@@ -10,8 +9,9 @@ import {
   logout,
   connectedToGame,
   receiveGameState,
-  updateActiveGamesFromServer,
-  receivedAvailableGamesFromServer,
+  receivedActiveGames,
+  receivedAvailableGames,
+  createdNewGame,
 } from 'redux/actions'
 
 class LobbyContainer extends React.Component {
@@ -24,7 +24,7 @@ class LobbyContainer extends React.Component {
       .get(`/users/${this.props.userId}/games`)
       .then(res => {
         const { games } = res.data
-        this.props.updateActiveGamesFromServer({ games })
+        this.props.receivedActiveGames({ games })
       })
       .catch(err => {
         throw err
@@ -33,7 +33,7 @@ class LobbyContainer extends React.Component {
     axios
       .get('/games/available')
       .then(res => {
-        this.props.receivedAvailableGamesFromServer({ games: res.data.games })
+        this.props.receivedAvailableGames({ games: res.data.games })
       })
       .catch(err => {
         throw err
@@ -49,8 +49,7 @@ class LobbyContainer extends React.Component {
     axios
       .post('/games', { name, numPlayers, useColorTemplate })
       .then(res => {
-        const gameId = res.data.gameId
-        this.joinGame(gameId)
+        this.props.createdNewGame({ game: res.data })
       })
       .catch(err => {
         throw err
@@ -58,7 +57,7 @@ class LobbyContainer extends React.Component {
   }
 
   render() {
-    if (!this.props.isLoggedIn) {
+    if (this.props.shouldRedirectToLogin) {
       return <Redirect to="/login" />
     }
 
@@ -75,7 +74,7 @@ class LobbyContainer extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    isLoggedIn: state.userInfo.isLoggedIn,
+    shouldRedirectToLogin: !state.userInfo.isLoggedIn,
     userId: state.userInfo.userId,
     activeGames: state.lobby.activeGames,
     availableGames: state.lobby.availableGames,
@@ -88,7 +87,8 @@ export default connect(
     logout,
     connectedToGame,
     receiveGameState,
-    updateActiveGamesFromServer,
-    receivedAvailableGamesFromServer,
+    receivedActiveGames,
+    receivedAvailableGames,
+    createdNewGame
   }
 )(LobbyContainer)

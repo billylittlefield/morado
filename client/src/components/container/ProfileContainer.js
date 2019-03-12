@@ -1,33 +1,52 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 import axios from 'axios'
 
 import { logout } from 'redux/actions'
 
 function Profile(props) {
-  const user = props.user
+  const { userId, username, isLoggedIn } = props.userInfo
 
   function submitLogout() {
     axios
       .post('/auth/logout', {
-        userId: user.userId,
+        userId,
       })
       .finally(() => {
         props.logout()
       })
   }
 
-  return (
-    <div className="profile-container">
-      <div className="user-greeting">{user.username}</div>
+  function redirectToLogin() {
+    props.history.push('/login')
+  }
+
+  const logoutButton = (
+    <>
+      <div className="user-greeting">{username}</div>
       <button className="mdc-button mdc-button--unelevated" onClick={submitLogout}>
         <span className="mdc-button__label">Logout</span>
       </button>
+    </>
+  )
+
+  const loginButton = (
+    <>
+      <button className="mdc-button mdc-button--unelevated" onClick={redirectToLogin}>
+        <span className="mdc-button__label">Login</span>
+      </button>
+    </>
+  )
+
+  return (
+    <div className="profile-container">
+      {isLoggedIn ? logoutButton : loginButton}
     </div>
   )
 }
 
 export default connect(
-  null,
+  state => ({ userInfo: state.userInfo }),
   { logout }
-)(Profile)
+)(withRouter(Profile))

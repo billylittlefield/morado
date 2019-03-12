@@ -8,8 +8,9 @@ function GameBoard(props) {
   const [selectedFactoryIndex, setSelectedFactoryIndex] = useState(null)
   const [selectedTiles, setSelectedTiles] = useState([])
   const [possibleRowPlacements, setPossibleRowPlacements] = useState([])
-  const opponents = _.reject(props.players, { userId: props.userInfo.userId })
-  const activePlayer = _.find(props.players, { userId: props.userInfo.userId }) || props.players[0]
+  const activePlayerId = props.userInfo.userId || props.players[0].userId
+  const activePlayer = _.find(props.players, { userId: activePlayerId })
+  const opponents = _.reject(props.players, { userId: activePlayerId })
 
   function selectTileInFactory(tileColor, factoryIndex) {
     if (activePlayer.seatIndex !== activeSeatIndex) {
