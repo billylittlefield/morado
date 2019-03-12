@@ -2,57 +2,49 @@
 // Containers
 // ==============================
 
-.azul {
+section.azul {
   padding: 24px;
+  display: flex;
+  justify-content: center;
+  margin: 0 auto;
+  width: 1000px;
+
+  .left-container, .right-container {
+    margin: 0 20px;
+    display: flex;
+    flex-direction: column; 
+  }
+
+  .left-container {
+    align-items: center;
+  }
 }
 
 .opponent-list {
   display: flex;
-  justify-content: space-between;
-  border: 2px solid black;
-  padding: 8px;
+  flex-direction: column;
 }
 
 .player-board {
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  &.own-board {
-    border: 2px solid black;
-    padding: 50px;
-
-    .staging-rows {
-      padding: 10px;
-      margin: 10px;
-      width: 100%;
-    }
-    
-    .final-rows {
-      padding: 10px;
-      margin: 10px;
-      width: 100%;
-    }
-
-    .broken-tiles {
-      padding: 10px;
-      margin: 10px;
-      width: 100%;
-    }
-  }
+  border: 1px solid black;
+  border-radius: 8px;
+  padding: 16px;
 
   &.opponent-board {
-    width: 240px;
-    border: 1px solid black;
-
     .square {
       width: 10px;
       height: 10px;
     }
   }
 
+  .player-info {
+    align-self: flex-start;
+  }
+
   .staging-rows {
-    border: 2px solid black;
     background: yellow;
     display: flex;
     justify-content: center;
@@ -64,7 +56,6 @@
   }
   
   .final-rows {
-    border: 2px solid black;
     background: green;
     display: flex;
     justify-content: center;
@@ -72,11 +63,11 @@
   }
   
   .broken-tiles {
-    border: 2px solid black;
     background: red;
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 100%
   }
 }
 
@@ -85,9 +76,8 @@
 // Tile Positioning
 // ==============================
 
-.rows-container {
+.staging-and-final-rows-container {
   display: flex;
-  justify-content: stretch;
 }
 
 .row-container {
@@ -117,42 +107,33 @@
 // Factories
 // ==============================
 
-.factory-list {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-content: center;
-  border: 2px solid black;
-  margin-bottom: 50px;
-}
-
 .factory-container {
   display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
+  flex-direction: column;
+
+  .factory-row {
+    display: flex;
+    justify-content: center;
+  }
 }
 
 .factory{
+  height: 150px;
+  width: 150px;
+  border-radius: 75px;
   display: flex;
   flex-flow: row wrap;
   justify-content: center;
   align-content: center;
   border: 2px solid black;
-}
-
-.factory {
-  height: 150px;
-  width: 150px;
-  border-radius: 75px;
   margin: 10px;
 }
 
 .table-tiles {
-  border: 1px solid black;
   padding: 8px;
   display: flex;
   flex-flow: row wrap;
-  justify-content: left;
+  justify-content: center;
 }
 
 // ==============================

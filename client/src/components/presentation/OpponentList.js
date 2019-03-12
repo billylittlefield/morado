@@ -7,13 +7,9 @@ function OpponentList(props) {
       {props.opponents.map((opponent, index) => {
         return (
           <div key={index} className="opponent">
-            <div className="opponent-info">{opponent.username}</div>
             <PlayerBoard
               isOpponentBoard={true}
-              isActive={props.activeSeatIndex === opponent.seatIndex}
-              stagingRows={opponent.stagingRows}
-              finalRows={opponent.finalRows}
-              brokenTiles={opponent.brokenTiles}
+              player={opponent}
             />
           </div>
         )

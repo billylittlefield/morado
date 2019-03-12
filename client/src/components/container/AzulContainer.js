@@ -37,11 +37,11 @@ class AzulContainer extends React.Component {
   
   pullAndStageTiles(payload) {
     const { factoryIndex, tileColor, targetRowIndex } = payload
-    const { roundNumber, turnNumber, activeSeatIndex } = this.props.gameState
+    const { currentRoundNumber, currentTurnNumber, activeSeatIndex } = this.props.gameState
     const gameAction = {
       type: TILE_PULL,
-      roundNumber,
-      turnNumber,
+      roundNumber: currentRoundNumber,
+      turnNumber: currentTurnNumber,
       params: {
         seatIndex: activeSeatIndex,
         factoryIndex,
@@ -71,7 +71,7 @@ class AzulContainer extends React.Component {
 
 const mapStateToProps = (state, ownProps) => {
   const userInfo = state.userInfo
-  const socket = state.currentGame.state
+  const socket = state.currentGame.socket
   const gameState = state.currentGame.gameState
   const gameId = ownProps.match.params.gameId
   return { userInfo, socket, gameState, gameId }

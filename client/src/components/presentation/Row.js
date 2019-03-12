@@ -20,8 +20,15 @@ const Row = ({ tiles, rowIndex, requiredOrder, canAcceptPendingTiles, onRowSelec
     }
   }
 
+  let classList = 'row'
+  if (canAcceptPendingTiles) {
+    classList += ' active'
+  }
+  if (rowIndex === -1) {
+    classList += ' broken-tiles'
+  }
   return (
-    <div className={`${canAcceptPendingTiles ? 'active' : ''} row`} onClick={handleClick}>
+    <div className={classList} onClick={handleClick}>
       {squares.map(renderSquare)}
     </div>
   )

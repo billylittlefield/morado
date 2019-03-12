@@ -5,26 +5,64 @@ import Row from 'components/presentation/Row'
 import RowList from 'components/presentation/RowList'
 
 function PlayerBoard(props) {
+  if (!props.player) {
+    return null
+  }
+  const { stagingRows, finalRows, brokenTiles } = props.player
+  const isActiveAndHasPendingSelection =
+    props.player.seatIndex === props.activeSeatIndex &&
+    props.selectedTiles &&
+    props.selectedTiles.length > 0
+
+  function getPossibleRowPlacements() {
+    if (!isActiveAndHasPendingSelection) {
+      return null
+    }
+
+    const tileColor = props.selectedTiles[0]
+    return stagingRows.map((row, rowIndex) => {
+      // If the staging row is already full
+      if (row.tiles.filter(t => t !== null).length === row.rowSize) {
+        return false
+      }
+
+      // If the staging row is already storing another color
+      if (row.tiles[0] !== tileColor && row.tiles[0] !== null) {
+        return false
+      }
+
+      // If the corresponding final row already contains that color
+      if (finalRows[rowIndex].tiles.includes(tileColor)) {
+        return false
+      }
+
+      return true
+    })
+  }
+
   return (
     <div className={`player-board ${props.isOpponentBoard ? 'opponent-board' : 'own-board'}`}>
-      <div className="rows-container">
+      <div className="player-info">
+        <span>{props.player.username}</span>
+        <span> - </span>
+        <span>{props.player.score}</span>
+      </div>
+      <div className="staging-and-final-rows-container">
         <RowList
           isStaging={true}
-          possibleRowPlacements={props.isActive ? props.possibleRowPlacements : null}
-          rows={props.stagingRows}
+          possibleRowPlacements={getPossibleRowPlacements()}
+          rows={stagingRows}
           onRowSelected={props.onRowSelected}
         />
-        <RowList isStaging={false} rows={props.finalRows} />
+        <RowList isStaging={false} rows={finalRows} />
       </div>
-      <div className="broken-tiles">
-        <Row
-          tiles={props.brokenTiles}
-          rowSize={DROPPED_TILE_PENALTIES.length}
-          rowIndex={-1}
-          canAcceptPendingTiles={props.hasPendingSelection && props.isActive}
-          onRowSelected={props.onRowSelected}
-        />
-      </div>
+      <Row
+        tiles={brokenTiles}
+        rowSize={DROPPED_TILE_PENALTIES.length}
+        rowIndex={-1}
+        canAcceptPendingTiles={isActiveAndHasPendingSelection}
+        onRowSelected={props.onRowSelected}
+      />
     </div>
   )
 }

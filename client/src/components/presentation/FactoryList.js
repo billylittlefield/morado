@@ -4,7 +4,7 @@ import TileSquare from 'components/presentation/TileSquare'
 
 function FactoryList(props) {
   function renderFactories(factories) {
-    return factories.map((factory, index) => {
+    const factoryElements = factories.map((factory, index) => {
       return (
         <Factory
           key={index}
@@ -16,6 +16,17 @@ function FactoryList(props) {
         />
       )
     })
+
+    return (
+      <>
+        <div className="factory-row">
+          {factoryElements.slice(0, Math.floor(factoryElements.length / 2))}
+        </div>
+        <div className="factory-row">
+          {factoryElements.slice(Math.floor(factoryElements.length / 2))}
+        </div>
+      </>
+    )
   }
 
   function renderTableTiles(tableTiles) {
@@ -31,8 +42,8 @@ function FactoryList(props) {
   }
 
   return (
-    <div className="factory-list">
-      <div className="factory-container">{renderFactories(props.factories)}</div>
+    <div className="factory-container">
+      {renderFactories(props.factories)}
       <div className="table-tiles">{renderTableTiles(props.tableTiles)}</div>
     </div>
   )

@@ -42,6 +42,7 @@ function createNewPlayer(player, seatIndex, useColorTemplate) {
     userId: player.userId,
     username: player.username,
     seatIndex,
+    score: 0,
     stagingRows: Array(5)
       .fill()
       .map((_, index) => {
