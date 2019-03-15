@@ -1,10 +1,12 @@
 import React from 'react'
 
-const TileSquare = ({ tileColor, bgColor, isSelected, handleClick }) => {
+function TileSquare(props) {
+  const { tileColor, bgColor, isSelected, handleClick, canAcceptTileTransfer } = props
   const tileClass = tileColor ? ` tile-${tileColor}` : ''
   const bgClass = bgColor ? ` bg-${bgColor}` : ''
   const selectedClass = isSelected ? ` selected` : ''
-  const classList = `square${tileClass}${bgClass}${selectedClass}`
+  const possibleTileTransferClass = canAcceptTileTransfer ? ` pending-tile-transfer` : ''
+  const classList = `square${tileClass}${bgClass}${selectedClass}${possibleTileTransferClass}`
 
   return <div className={classList} onClick={handleClick} />
 }

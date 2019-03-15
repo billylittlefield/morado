@@ -14,7 +14,7 @@ function PlayerBoard(props) {
     props.selectedTiles &&
     props.selectedTiles.length > 0
 
-  function getPossibleRowPlacements() {
+  function getPossibleStagingRowPlacements() {
     if (!isActiveAndHasPendingSelection) {
       return null
     }
@@ -50,11 +50,15 @@ function PlayerBoard(props) {
       <div className="staging-and-final-rows-container">
         <RowList
           isStaging={true}
-          possibleRowPlacements={getPossibleRowPlacements()}
+          possibleRowPlacements={getPossibleStagingRowPlacements()}
           rows={stagingRows}
           onRowSelected={props.onRowSelected}
         />
-        <RowList isStaging={false} rows={finalRows} />
+        <RowList
+          isStaging={false}
+          rows={finalRows}
+          rowsPendingTileTransfer={props.rowsPendingTileTransfer}
+        />
       </div>
       <Row
         tiles={brokenTiles}

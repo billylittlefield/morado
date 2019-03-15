@@ -66,6 +66,7 @@ export default class Azul extends React.Component {
   render() {
     const userPlayer = this.getUserPlayer()
     const opponents = this.getOpponents()
+    const rowsPendingTileTransfer = userPlayer && this.props.seatsRequiringInput[userPlayer.seatIndex]
     return (
       <>
         <Link to="/lobby">Back to Lobby</Link>
@@ -84,14 +85,15 @@ export default class Azul extends React.Component {
               activeSeatIndex={this.props.activeSeatIndex}
               selectedTiles={this.state.selectedTiles}
               onRowSelected={this.selectPlacementRow.bind(this)}
+              rowsPendingTileTransfer={rowsPendingTileTransfer}
             />
           </div>
 
           <div className="right-container">
             <div className="game-info">
               <div>Game: {this.props.options.name}</div>
-              <div>Round: {this.props.currentRoundNumber}</div>
-              <div>Turn: {this.props.currentTurnNumber}</div>
+              <div>Round: {this.props.currentRoundNumber || '-'}</div>
+              <div>Turn: {this.props.currentTurnNumber || '-'}</div>
               <div>{`${this.getActivePlayer().username}'s turn`}</div>
             </div>
             <OpponentList
@@ -105,52 +107,3 @@ export default class Azul extends React.Component {
     )
   }
 }
-
-// componentDidUpdate() {
-//   if (this.isRoundOver()) {
-//     this.transferTiles()
-//     this.refillFactories()
-//   }
-// }
-
-// transferTiles() {
-//   let transfers = []
-
-//   this.props.players.forEach((player, playerIndex) => {
-//     player.stagingRows.forEach((stagingRow, rowIndex) => {
-//       const isStagingRowFull =
-//         stagingRow.rowSize === stagingRow.tiles.filter(t => t !== null).length
-//       if (!isStagingRowFull) {
-//         return
-//       }
-
-//       const tileColor = stagingRow.tiles[0]
-//       const isStagingRowUniform = _.every(stagingRow.tiles, t => t === tileColor)
-//       if (!isStagingRowUniform) {
-//         throw new Error('Staging row should only contain 1 color of tile')
-//       }
-
-//       const isSpotFilled = player.finalRows[rowIndex].tiles.includes(tileColor)
-//       if (!isSpotFilled) {
-//         const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
-//         transfers
-//           .push
-//           new TileTransfer(
-//             this.props.round,
-//             this.props.turn,
-//             playerIndex,
-//             rowIndex,
-//             columnIndex,
-//             tileColor
-//           )
-//           ()
-//       }
-//     })
-//   })
-
-//   this.props.transferTiles(transfers)
-// }
-
-// isRoundOver() {
-//   return _.every(this.props.factories, ['length', 0]) && this.props.tableTiles.length === 0
-// }

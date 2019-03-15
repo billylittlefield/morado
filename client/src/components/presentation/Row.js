@@ -1,17 +1,30 @@
 import React from 'react'
 import TileSquare from 'components/presentation/TileSquare'
 
-const Row = ({ tiles, rowIndex, requiredOrder, canAcceptPendingTiles, onRowSelected }) => {
-  const squares = tiles.map((tileColor, index) => {
-    const bgColor = requiredOrder ? requiredOrder[index] : null
-    return {
-      bgColor,
-      tileColor,
-    }
-  })
+function Row(props) {
+  const {
+    rowIndex,
+    canAcceptPendingTiles,
+    onRowSelected,
+    possibleTileTransfers,
+    tiles,
+    requiredOrder,
+  } = props
 
-  function renderSquare(square, index) {
-    return <TileSquare key={index} tileColor={square.tileColor} bgColor={square.bgColor} />
+  function renderSquares() {
+    return tiles.map((tileColor, columnIndex) => {
+      const bgColor = requiredOrder ? requiredOrder[columnIndex] : null
+      const canAcceptTileTransfer =
+        possibleTileTransfers && possibleTileTransfers.includes(columnIndex)
+      return (
+        <TileSquare
+          key={columnIndex}
+          tileColor={tileColor}
+          bgColor={bgColor}
+          canAcceptTileTransfer={canAcceptTileTransfer}
+        />
+      )
+    })
   }
 
   function handleClick() {
@@ -29,7 +42,7 @@ const Row = ({ tiles, rowIndex, requiredOrder, canAcceptPendingTiles, onRowSelec
   }
   return (
     <div className={classList} onClick={handleClick}>
-      {squares.map(renderSquare)}
+      {renderSquares()}
     </div>
   )
 }

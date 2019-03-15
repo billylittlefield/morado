@@ -26,10 +26,10 @@ class AzulContainer extends React.Component {
         socket.on('userJoined', userInfo => {
           console.log(`${userInfo.username} has joined the lobby`)
         })
-        socket.on('gameUpdate', (gameId, gameType, gameState) => {
-          this.props.receiveGameState({ gameId, gameType, gameState })
+        socket.on('gameUpdate', gameState => {
+          this.props.receiveGameState({ gameState })
         })
-    
+        
         socket.emit('joinGame', gameId)
       }
     })
@@ -53,6 +53,18 @@ class AzulContainer extends React.Component {
     this.props.pullAndStageTiles(gameAction)
     // Update server state:
     this.props.socket.emit('pullAndStageTiles', gameAction)
+  }
+
+  checkForTileTransfers() {
+    const { factories, tableTiles } = this.props.gameState
+    // If there are no tiles left in any factory or on the table, trigger tile transfer
+    if (factories.every(f => f.length === 0) && tableTiles.length === 0) {
+      this.createTileTransfers()
+    }
+  }
+
+  createTileTransfers() {
+    this.props.gameState.players.forEach()
   }
 
   render() {

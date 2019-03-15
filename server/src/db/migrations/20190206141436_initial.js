@@ -14,6 +14,10 @@ exports.up = function(knex, Promise) {
         .boolean('isComplete')
         .notNullable()
         .defaultTo(false)
+      table
+        .integer('current_round_number')
+        .notNullable()
+        .defaultTo(0)
       table.timestamps(true, true)
     }),
 

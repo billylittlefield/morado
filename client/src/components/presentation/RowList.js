@@ -3,15 +3,18 @@ import Row from 'components/presentation/Row'
 
 function RowList(props) {
   function renderRowList(rows) {
-    return rows.map((row, index) => {
-      let canAcceptPendingTiles =
-        props.isStaging && props.possibleRowPlacements && props.possibleRowPlacements[index]
+    return rows.map((row, rowIndex) => {
+      const canAcceptPendingTiles =
+        props.isStaging && props.possibleRowPlacements && props.possibleRowPlacements[rowIndex]
+      const possibleTileTransfers =
+        !props.isStaging && props.rowsPendingTileTransfer && props.rowsPendingTileTransfer[rowIndex]
       return (
         <Row
-          key={index}
-          rowIndex={index}
+          key={rowIndex}
+          rowIndex={rowIndex}
           canAcceptPendingTiles={canAcceptPendingTiles}
           onRowSelected={props.onRowSelected}
+          possibleTileTransfers={possibleTileTransfers}
           {...row}
         />
       )

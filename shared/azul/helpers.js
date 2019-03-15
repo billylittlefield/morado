@@ -10,7 +10,10 @@ const {
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
   FIRST_PLAYER_TOKEN,
+  GET_FACTORY_COUNT,
 } = require('./game-invariants')
+
+const { shuffle } = require('../util')
 
 function getInitialGameState(players, options) {
   return {
@@ -23,18 +26,27 @@ function getInitialGameState(players, options) {
       .map((_, index) => {
         return TILE_COLORS[index % TILE_COLORS.length]
       }),
-    factories: Array(5)
+    factories: Array(GET_FACTORY_COUNT(options.numPlayers))
       .fill()
       .map(() => []),
     discardTiles: [],
     tableTiles: [],
-    currentRoundNumber: 0,
-    currentTurnNumber: 0,
+    currentRoundNumber: null,
+    currentTurnNumber: null,
     firstSeatNextRound: null,
     activeSeatIndex: 0,
     actionHistory: [],
     historyIndex: 0,
+    seatsRequiringInput: [],
   }
+}
+
+function createInitialTileList() {
+  return Array(TILE_COLORS.length * NUM_TILES_OF_COLOR)
+    .fill()
+    .map((_, index) => {
+      return TILE_COLORS[index % TILE_COLORS.length]
+    })
 }
 
 function createNewPlayer(player, seatIndex, useColorTemplate) {
@@ -58,6 +70,26 @@ function createNewPlayer(player, seatIndex, useColorTemplate) {
   }
 }
 
+function generateInitialFactoryRefills(gameSize) {
+  const shuffleTiles = shuffle(createInitialTileList())
+  return Array(GET_FACTORY_COUNT(gameSize))
+    .fill()
+    .map((_ignore, factoryIndex) => {
+      const factory = []
+      _.times(4, () => factory.push(shuffleTiles.pop()))
+      const factoryCode = createFactoryCodeFromTiles(factory)
+      return {
+        type: FACTORY_REFILL,
+        roundNumber: 1,
+        turnNumber: 0,
+        params: {
+          factoryCode,
+          factoryIndex,
+        },
+      }
+    })
+}
+
 function applyActions(state, actions) {
   let newState = _.cloneDeep(state)
   actions.forEach(action => {
@@ -75,6 +107,7 @@ function applyActions(state, actions) {
         throw new Error('Unrecognized Azul action type')
     }
   })
+  newState = checkForPendingTileTransfers(newState)
   return newState
 }
 
@@ -179,10 +212,10 @@ function applyTilePull(state, action) {
 
 function applyTileTransfer(state, action) {
   const { roundNumber, turnNumber, params } = action.payload
-  const { playerIndex, rowIndex, columnIndex, tileColor } = params
+  const { seatIndex, rowIndex, columnIndex, tileColor } = params
 
   return produce(state, draft => {
-    const player = _.find(draft.players, { playerIndex })
+    const player = _.find(draft.players, { seatIndex })
 
     player.finalRows[rowIndex].tiles[columnIndex] = tileColor
     player.stagingRows[rowIndex].tiles.fill(null)
@@ -195,32 +228,85 @@ function applyTileTransfer(state, action) {
   })
 }
 
-const TILE_TYPE_INDEX_MAP = {
-  0: 'black',
-  1: 'blue',
-  2: 'red',
-  3: 'snowflake',
-  4: 'yellow',
-  5: null,
+function checkForPendingTileTransfers(state) {
+  const { tableTiles, factories } = state
+
+  return produce(state, draft => {
+    if (
+      tableTiles.length !== 0 ||
+      factories.every(f => f.length !== 0) ||
+      draft.options.useColorTemplate
+    ) {
+      return draft
+    }
+
+    let seatsRequiringInput = {}
+    draft.players.forEach(player => {
+      player.stagingRows.forEach((stagingRow, rowIndex) => {
+        // Only look at full staging rows:
+        if (stagingRow.rowSize !== stagingRow.tiles.filter(t => t !== null).length) {
+          return
+        }
+
+        // Double check that all the tiles are the same color
+        const tileColor = stagingRow.tiles[0]
+        if (!stagingRow.tiles.every(t => t === tileColor)) {
+          throw new Error('Staging row should only contain 1 color of tile')
+        }
+
+        // Double check that the corresponding final row doesn't already have this tile
+        if (player.finalRows[rowIndex].tiles.includes(tileColor)) {
+          throw new Error('Final row already contains this color')
+        }
+
+        // If not using the template, identify all possible column indices given the current state
+        // of final rows on this players board
+        const possibleColumnIndices = [0, 1, 2, 3, 4].filter(columnIndex => {
+          return (
+            player.finalRows.every(r => r.tiles[columnIndex] !== tileColor) &&
+            stagingRow[columnIndex] === null
+          )
+        })
+        if (possibleColumnIndices.length > 1) {
+          const rowIndexToColumnIndexMap = { [rowIndex]: possibleColumnIndices }
+          // If there are more than one available index, we can't auto-perform this transfer
+          if (seatsRequiringInput[player.seatIndex]) {
+            Object.assign(seatsRequiringInput[player.seatIndex], rowIndexToColumnIndexMap)
+          } else {
+            seatsRequiringInput[player.seatIndex] = rowIndexToColumnIndexMap
+          }
+        }
+      })
+    })
+
+    draft.seatsRequiringInput = seatsRequiringInput
+  })
 }
+
+const TILE_TYPES = TILE_COLORS.concat([null])
 
 /**
  * Converts a factory code into a list of tile types. A factory code is a 4 digit number where each
- * digit represents a tile. The map used to decode these digits is TILE_TYPE_INDEX_MAP
- * @see {TILE_TYPE_INDEX_MAP}
+ * digit represents a tile color, or null.
+ * @see {TILE_TYPES}
  * @return {Array.<string>}
  * @param {string} factoryCode
  */
 function parseTilesFromFactoryCode(factoryCode) {
   let factory = []
   factoryCode.split('').forEach(tileCode => {
-    factory.push(TILE_TYPE_INDEX_MAP[tileCode])
+    factory.push(TILE_TYPES[tileCode])
   })
   return factory
 }
 
+function createFactoryCodeFromTiles(tiles) {
+  return tiles.map(tile => TILE_TYPES.indexOf(tile)).join('')
+}
+
 module.exports = {
   getInitialGameState,
+  generateInitialFactoryRefills,
   applyActions,
   applyTilePull,
 }

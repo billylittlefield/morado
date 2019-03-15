@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import axios from 'axios'
 import _ from 'lodash'
-import { Redirect } from 'react-router-dom'
+import { Redirect, withRouter } from 'react-router-dom'
 
 import Lobby from 'components/presentation/Lobby'
 import {
@@ -42,7 +42,14 @@ class LobbyContainer extends React.Component {
 
   joinGame(gameId) {
     const userId = this.props.userId
-    axios.post('/gameplays', { gameId, userId })
+    axios
+      .post('/gameplays', { gameId, userId })
+      .then(res => {
+        this.props.history.push(`/azul/${gameId}`)
+      })
+      .catch(err => {
+        throw err
+      })
   }
 
   createGame(name, numPlayers, useColorTemplate) {
@@ -50,6 +57,7 @@ class LobbyContainer extends React.Component {
       .post('/games', { name, numPlayers, useColorTemplate })
       .then(res => {
         this.props.createdNewGame({ game: res.data })
+        this.props.history.push(`/azul/${res.data.gameId}`)
       })
       .catch(err => {
         throw err
@@ -89,6 +97,6 @@ export default connect(
     receiveGameState,
     receivedActiveGames,
     receivedAvailableGames,
-    createdNewGame
+    createdNewGame,
   }
-)(LobbyContainer)
+)(withRouter(LobbyContainer))

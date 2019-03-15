@@ -2,6 +2,7 @@ import db from 'db'
 import _ from 'lodash'
 
 import AzulHelpers from '@shared/azul/helpers'
+import { REQUIRED_ORDER, TILE_TRANSFER } from '@shared/azul/game-invariants'
 
 async function createGame(options) {
   const gameId = (await db('games').insert({
@@ -95,6 +96,24 @@ async function fetchGamesByIds(gameIds) {
   })
 }
 
+async function startGameIfFull(gameId) {
+  const gameSize = parseInt((await db('games')
+  .select({
+    gameSize: db.raw('json_extract(games.options, "$.numPlayers")'),
+  })
+  .where('games.id', gameId))[0].gameSize)
+  
+  const numPlayers = (await db('game_plays')
+  .count('user_id as numPlayers')
+  .where('game_id', gameId))[0].numPlayers
+  
+  if (gameSize === numPlayers) {
+    const initialFactoryRefills = AzulHelpers.generateInitialFactoryRefills(gameSize)
+    await saveAndApplyActions(gameId, initialFactoryRefills)
+    await db('games').where('games.id', gameId).update('start_time', new Date())
+  }
+}
+
 async function getGameState(gameId) {
   const game = (await db
     .table('games')
@@ -129,18 +148,89 @@ async function getGameState(gameId) {
   return currentState
 }
 
-async function applyAction(gameId, gameAction) {
-  let currentState = await getGameState(gameId)
-  currentState = await AzulHelpers.applyActions(currentState, [gameAction])
+async function saveAndApplyActions(gameId, gameActions, gameState = null) {
+  if (gameState === null) {
+    gameState = await getGameState(gameId)
+  }
+  const updatedState = await AzulHelpers.applyActions(gameState, gameActions)
 
-  await db('azul_actions').insert({
-    game_id: gameId,
-    type: gameAction.type,
-    round_number: gameAction.roundNumber,
-    turn_number: gameAction.turnNumber,
-    params: JSON.stringify(gameAction.params),
+  await db('azul_actions').insert(
+    gameActions.map(action => ({
+      game_id: gameId,
+      type: action.type,
+      round_number: action.roundNumber,
+      turn_number: action.turnNumber,
+      params: JSON.stringify(action.params),
+    }))
+  )
+
+  return updatedState
+}
+
+function isRoundOver(gameState) {
+  const { tableTiles, factories } = gameState
+  return tableTiles.length === 0 && factories.every(f => f.length === 0)
+}
+
+async function incrementRound(gameId) {
+  await db('games')
+    .where('id', gameId)
+    .increment('current_round_number', 1)
+}
+
+function getTileTransfers(gameState) {
+  const { useColorTemplate } = gameState.options
+  let tileTransfers = []
+  // For every player
+  gameState.players.forEach(player => {
+    // Look at their staging rows
+    player.stagingRows.forEach((stagingRow, rowIndex) => {
+      // Only look at full staging rows:
+      if (stagingRow.rowSize !== stagingRow.tiles.filter(t => t !== null).length) {
+        return
+      }
+
+      // Double check that all the tiles are the same color
+      const tileColor = stagingRow.tiles[0]
+      if (!stagingRow.tiles.every(t => t === tileColor)) {
+        throw new Error('Staging row should only contain 1 color of tile')
+      }
+
+      // Double check that the corresponding final row doesn't already have this tile
+      if (player.finalRows[rowIndex].tiles.includes(tileColor)) {
+        throw new Error('Final row already contains this color')
+      }
+
+      // If using the color template, the column index is predefined
+      if (useColorTemplate) {
+        const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
+        tileTransfers.push({
+          type: TILE_TRANSFER,
+          roundNumber: gameState.currentRoundNumber,
+          params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
+        })
+      } else {
+        // If not using the template, identify all possible column indices given the current state
+        // of final rows on this players board
+        const possibleColumnIndices = [0, 1, 2, 3, 4].filter(columnIndex => {
+          return (
+            player.finalRows.every(r => r.tiles[columnIndex] !== tileColor) &&
+            stagingRow[columnIndex] === null
+          )
+        })
+        if (possibleColumnIndices.length === 1) {
+          const columnIndex = possibleColumnIndices[0]
+          tileTransfers.push({
+            type: TILE_TRANSFER,
+            roundNumber: gameState.currentRoundNumber,
+            params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
+          })
+        }
+      }
+    })
   })
-  return currentState
+
+  return tileTransfers
 }
 
 export default {
@@ -148,6 +238,10 @@ export default {
   createGamePlay,
   fetchGames,
   fetchGamesByUserId,
+  startGameIfFull,
   getGameState,
-  applyAction,
+  saveAndApplyActions,
+  isRoundOver,
+  getTileTransfers,
+  incrementRound,
 }

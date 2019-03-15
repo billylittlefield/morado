@@ -10,6 +10,7 @@ gameplayRouter.route('/').post(async (req, res) => {
     res.status(401).end()
   }
   await GameController.createGamePlay(gameId, userId)
+  await GameController.startGameIfFull(gameId)
 
   res.status(200).json({ gameId })
 })

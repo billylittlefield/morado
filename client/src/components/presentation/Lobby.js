@@ -79,13 +79,12 @@ function Lobby(props) {
                 <td>{game.usernames.join(', ') || 'Empty'}</td>
                 <td>{game.options.useColorTemplate ? 'Standard' : 'No template'}</td>
                 <td>
-                  <Link to={`azul/${game.gameId}`}
-                    className="mdc-button mdc-button--unelevated"
+                  <button className="mdc-button mdc-button--unelevated"
                     onClick={() => {
                       props.joinGame(game.gameId)
                     }}>
                     Join
-                  </Link>
+                  </button>
                 </td>
               </tr>
             )
@@ -103,7 +102,7 @@ function Lobby(props) {
     props.createGame(newGameName, newGameSize, newGameTemplate)
     setNewGameName('')
     setNewGameSize(2)
-    setNewGameTemplate(false)
+    setNewGameTemplate(true)
     setCreateGameModalIsOpen(false)
   }
 

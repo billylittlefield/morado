@@ -14,9 +14,9 @@ const server = http.Server(app)
  */
 
 const io = socketIO(server)
-import gamesServiceCreator from 'services/games'
-const gamesService = gamesServiceCreator(io)
-io.on('connection', gamesService)
+import gameServiceCreator from 'services/game'
+const gameService = gameServiceCreator(io)
+io.on('connection', gameService)
 
 /**
  * JSON parsing
