@@ -3,8 +3,14 @@ import axios from 'axios'
 import io from 'socket.io-client'
 import { connect } from 'react-redux'
 
-import { connectedToGame, receiveGameState, refillFactories, pullAndStageTiles, transferTiles } from 'redux/actions'
-import { TILE_PULL } from '@shared/azul/game-invariants'
+import {
+  connectedToGame,
+  receiveGameState,
+  refillFactories,
+  pullAndStageTiles,
+  transferTiles,
+} from 'redux/actions'
+import { TILE_PULL, TILE_TRANSFER } from '@shared/azul/game-invariants'
 import Azul from 'components/presentation/Azul'
 
 class AzulContainer extends React.Component {
@@ -14,27 +20,33 @@ class AzulContainer extends React.Component {
     // Load game state
     axios.get(`/games/azul/${gameId}`).then(res => {
       this.props.receiveGameState({ ...res.data })
-      
+
       // Check if the current user is in this game
       if (_.find(res.data.gameState.players, ['userId', this.props.userInfo.userId])) {
-
         // If so, setup websocket for game
         const socket = io.connect('localhost:3000')
         this.props.connectedToGame({ socket })
-    
+
         socket.on('sessionExpired', this.props.logout)
         socket.on('userJoined', userInfo => {
           console.log(`${userInfo.username} has joined the lobby`)
         })
+        socket.on('endOfRound', roundNumber => {
+          console.log(`End of round ${roundNumber}`)
+        })
+        socket.on('startOfRound', roundNumber => {
+          console.log(`Start of round ${roundNumber}`)
+        })
         socket.on('gameUpdate', gameState => {
+          console.log('Received game update')
           this.props.receiveGameState({ gameState })
         })
-        
+
         socket.emit('joinGame', gameId)
       }
     })
   }
-  
+
   pullAndStageTiles(payload) {
     const { factoryIndex, tileColor, targetRowIndex } = payload
     const { currentRoundNumber, currentTurnNumber, activeSeatIndex } = this.props.gameState
@@ -55,16 +67,25 @@ class AzulContainer extends React.Component {
     this.props.socket.emit('pullAndStageTiles', gameAction)
   }
 
-  checkForTileTransfers() {
-    const { factories, tableTiles } = this.props.gameState
-    // If there are no tiles left in any factory or on the table, trigger tile transfer
-    if (factories.every(f => f.length === 0) && tableTiles.length === 0) {
-      this.createTileTransfers()
-    }
-  }
+  transferTiles(payload) {
+    const { currentRoundNumber } = this.props.gameState
+    const { seatIndex, rowIndex, columnIndex, tileColor } = payload
 
-  createTileTransfers() {
-    this.props.gameState.players.forEach()
+    const gameAction = {
+      type: TILE_TRANSFER,
+      roundNumber: currentRoundNumber,
+      params: {
+        rowIndex,
+        columnIndex,
+        tileColor,
+        seatIndex
+      }
+    }
+
+    // Update local state:
+    this.props.transferTiles(gameAction)
+    // Update server state:
+    this.props.socket.emit('transferTiles', gameAction)
   }
 
   render() {
@@ -76,6 +97,7 @@ class AzulContainer extends React.Component {
         {...this.props.gameState}
         userInfo={this.props.userInfo}
         pullAndStageTiles={this.pullAndStageTiles.bind(this)}
+        transferTiles={this.transferTiles.bind(this)}
       />
     )
   }
@@ -91,5 +113,11 @@ const mapStateToProps = (state, ownProps) => {
 
 export default connect(
   mapStateToProps,
-  { receiveGameState, connectedToGame, refillFactories, pullAndStageTiles, transferTiles }
+  { 
+    receiveGameState, 
+    connectedToGame, 
+    refillFactories, 
+    pullAndStageTiles, 
+    transferTiles
+  }
 )(AzulContainer)

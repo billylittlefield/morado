@@ -63,6 +63,18 @@ export default class Azul extends React.Component {
     })
   }
 
+  placeTileInFinalRow(rowIndex, columnIndex) {
+    const userPlayer = this.getUserPlayer()
+    const tileColor = userPlayer.stagingRows[rowIndex].tiles[0]
+    const seatIndex = userPlayer.seatIndex
+    this.props.transferTiles({
+      rowIndex,
+      columnIndex,
+      tileColor,
+      seatIndex
+    })
+  }
+
   render() {
     const userPlayer = this.getUserPlayer()
     const opponents = this.getOpponents()
@@ -85,6 +97,7 @@ export default class Azul extends React.Component {
               activeSeatIndex={this.props.activeSeatIndex}
               selectedTiles={this.state.selectedTiles}
               onRowSelected={this.selectPlacementRow.bind(this)}
+              placeTileInFinalRow={this.placeTileInFinalRow.bind(this)}
               rowsPendingTileTransfer={rowsPendingTileTransfer}
             />
           </div>

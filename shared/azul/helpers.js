@@ -37,7 +37,7 @@ function getInitialGameState(players, options) {
     activeSeatIndex: 0,
     actionHistory: [],
     historyIndex: 0,
-    seatsRequiringInput: [],
+    seatsRequiringInput: {},
   }
 }
 
@@ -231,54 +231,55 @@ function applyTileTransfer(state, action) {
 function checkForPendingTileTransfers(state) {
   const { tableTiles, factories } = state
 
-  return produce(state, draft => {
-    if (
-      tableTiles.length !== 0 ||
-      factories.every(f => f.length !== 0) ||
-      draft.options.useColorTemplate
-    ) {
-      return draft
-    }
+  if (
+    tableTiles.length !== 0 ||
+    factories.every(f => f.length !== 0) ||
+    state.options.useColorTemplate
+  ) {
+    return state
+  }
 
-    let seatsRequiringInput = {}
-    draft.players.forEach(player => {
-      player.stagingRows.forEach((stagingRow, rowIndex) => {
-        // Only look at full staging rows:
-        if (stagingRow.rowSize !== stagingRow.tiles.filter(t => t !== null).length) {
-          return
-        }
+  let seatsRequiringInput = {}
+  state.players.forEach(player => {
+    player.stagingRows.forEach((stagingRow, rowIndex) => {
+      // Only look at full staging rows:
+      if (stagingRow.rowSize !== stagingRow.tiles.filter(t => t !== null).length) {
+        return
+      }
 
-        // Double check that all the tiles are the same color
-        const tileColor = stagingRow.tiles[0]
-        if (!stagingRow.tiles.every(t => t === tileColor)) {
-          throw new Error('Staging row should only contain 1 color of tile')
-        }
+      // Double check that all the tiles are the same color
+      const tileColor = stagingRow.tiles[0]
+      if (!stagingRow.tiles.every(t => t === tileColor)) {
+        throw new Error('Staging row should only contain 1 color of tile')
+      }
 
-        // Double check that the corresponding final row doesn't already have this tile
-        if (player.finalRows[rowIndex].tiles.includes(tileColor)) {
-          throw new Error('Final row already contains this color')
-        }
+      // Double check that the corresponding final row doesn't already have this tile
+      if (player.finalRows[rowIndex].tiles.includes(tileColor)) {
+        throw new Error('Final row already contains this color')
+      }
 
-        // If not using the template, identify all possible column indices given the current state
-        // of final rows on this players board
-        const possibleColumnIndices = [0, 1, 2, 3, 4].filter(columnIndex => {
-          return (
-            player.finalRows.every(r => r.tiles[columnIndex] !== tileColor) &&
-            stagingRow[columnIndex] === null
-          )
-        })
-        if (possibleColumnIndices.length > 1) {
-          const rowIndexToColumnIndexMap = { [rowIndex]: possibleColumnIndices }
-          // If there are more than one available index, we can't auto-perform this transfer
-          if (seatsRequiringInput[player.seatIndex]) {
-            Object.assign(seatsRequiringInput[player.seatIndex], rowIndexToColumnIndexMap)
-          } else {
-            seatsRequiringInput[player.seatIndex] = rowIndexToColumnIndexMap
-          }
-        }
+      // If not using the template, identify all possible column indices given the current state
+      // of final rows on this players board
+      const possibleColumnIndices = [0, 1, 2, 3, 4].filter(columnIndex => {
+        return (
+          player.finalRows.every(r => r.tiles[columnIndex] !== tileColor) &&
+          player.finalRows[rowIndex].tiles[columnIndex] === null
+        )
       })
+      
+      if (possibleColumnIndices.length > 1) {
+        const rowIndexToColumnIndexMap = { [rowIndex]: possibleColumnIndices }
+        // If there are more than one available index, we can't auto-perform this transfer
+        if (seatsRequiringInput[player.seatIndex]) {
+          Object.assign(seatsRequiringInput[player.seatIndex], rowIndexToColumnIndexMap)
+        } else {
+          seatsRequiringInput[player.seatIndex] = rowIndexToColumnIndexMap
+        }
+      }
     })
+  })
 
+  return produce(state, draft => {
     draft.seatsRequiringInput = seatsRequiringInput
   })
 }

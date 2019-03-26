@@ -5,10 +5,11 @@ function Row(props) {
   const {
     rowIndex,
     canAcceptPendingTiles,
-    onRowSelected,
     possibleTileTransfers,
     tiles,
     requiredOrder,
+    onRowSelected,
+    onTileSelected
   } = props
 
   function renderSquares() {
@@ -22,6 +23,7 @@ function Row(props) {
           tileColor={tileColor}
           bgColor={bgColor}
           canAcceptTileTransfer={canAcceptTileTransfer}
+          handleClick={() => onTileSelected(rowIndex, columnIndex)}
         />
       )
     })

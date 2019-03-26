@@ -50,13 +50,14 @@ function PlayerBoard(props) {
       <div className="staging-and-final-rows-container">
         <RowList
           isStaging={true}
-          possibleRowPlacements={getPossibleStagingRowPlacements()}
           rows={stagingRows}
+          possibleRowPlacements={getPossibleStagingRowPlacements()}
           onRowSelected={props.onRowSelected}
         />
         <RowList
           isStaging={false}
           rows={finalRows}
+          onTileSelected={props.placeTileInFinalRow}
           rowsPendingTileTransfer={props.rowsPendingTileTransfer}
         />
       </div>

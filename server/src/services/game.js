@@ -36,12 +36,28 @@ async function joinGame(io, socket, gameId, userInfo) {
       const tileTransfers = GameController.getTileTransfers(newState)
       newState = await GameController.saveAndApplyActions(gameId, tileTransfers, newState)
       io.in(`azul:${gameId}`).emit('gameUpdate', newState)
-      if (newState.seatsRequiringInput.length === 0) {
-        await GameController.incrementRound(gameId)
-        io.in(`azul:${gameId}`).emit('startOfRound', newState.currentRoundNumber + 1)
-      }
+      startRoundIfReady(newState, gameId, newState.currentRoundNumber + 1)
     }
   })
+
+  socket.on('transferTiles', async gameAction => {
+    let newState
+    try {
+      newState = await GameController.saveAndApplyActions(gameId, [gameAction])
+    } catch (err) {
+      throw err
+    }
+
+    io.in(`azul:${gameId}`).emit('gameUpdate', newState)
+    startRoundIfReady(newState, gameId, newState.currentRoundNumber + 1)
+  })
+}
+
+async function startRoundIfReady(state, gameId, newRoundNumber) {
+  if (state.seatsRequiringInput.length === 0) {
+    await GameController.incrementRound(gameId)
+    io.in(`azul:${gameId}`).emit('startOfRound', newRoundNumber)
+  }
 }
 
 export default function(io) {

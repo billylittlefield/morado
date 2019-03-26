@@ -101,6 +101,10 @@ section.azul {
   height: 40px;
   width: 40px;
   margin: 4px;
+
+  &.pending-tile-transfer {
+    box-shadow: magenta 0px 0px 20px;
+  }
 }
 
 // ==============================

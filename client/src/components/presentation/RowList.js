@@ -8,12 +8,14 @@ function RowList(props) {
         props.isStaging && props.possibleRowPlacements && props.possibleRowPlacements[rowIndex]
       const possibleTileTransfers =
         !props.isStaging && props.rowsPendingTileTransfer && props.rowsPendingTileTransfer[rowIndex]
-      return (
+
+        return (
         <Row
           key={rowIndex}
           rowIndex={rowIndex}
           canAcceptPendingTiles={canAcceptPendingTiles}
           onRowSelected={props.onRowSelected}
+          onTileSelected={props.onTileSelected}
           possibleTileTransfers={possibleTileTransfers}
           {...row}
         />
