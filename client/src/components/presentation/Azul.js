@@ -27,16 +27,19 @@ export default class Azul extends React.Component {
 
   selectTileInFactory(tileColor, factoryIndex) {
     const userPlayer = this.getUserPlayer()
-    const isUsersTurn = userPlayer && (userPlayer.seatIndex === this.props.activeSeatIndex)
+    const isUsersTurn = userPlayer && userPlayer.seatIndex === this.props.activeSeatIndex
     if (!isUsersTurn) {
       return
     }
 
-    if (this.state.selectedTiles[0] === tileColor && this.state.selectedFactoryIndex === factoryIndex) {
+    if (
+      this.state.selectedTiles[0] === tileColor &&
+      this.state.selectedFactoryIndex === factoryIndex
+    ) {
       // Undo selection
       this.setState({
         selectedFactoryIndex: null,
-        selectedTiles: []
+        selectedTiles: [],
       })
     } else {
       // Select tiles in factory / broken tile row
@@ -45,45 +48,42 @@ export default class Azul extends React.Component {
       const tileCount = tileSet.filter(c => c === tileColor).length
       this.setState({
         selectedFactoryIndex: factoryIndex,
-        selectedTiles: Array(tileCount).fill(tileColor)
+        selectedTiles: Array(tileCount).fill(tileColor),
       })
     }
   }
 
-  selectPlacementRow(targetRowIndex) {
+  placeTilesFromFactory(targetRowIndex) {
     this.props.pullAndStageTiles({
       factoryIndex: this.state.selectedFactoryIndex,
       tileColor: this.state.selectedTiles[0],
-      targetRowIndex
+      targetRowIndex,
     })
 
     this.setState({
       selectedFactoryIndex: null,
-      selectedTiles: []
+      selectedTiles: [],
     })
   }
 
-  placeTileInFinalRow(rowIndex, columnIndex) {
-    const userPlayer = this.getUserPlayer()
-    const tileColor = userPlayer.stagingRows[rowIndex].tiles[0]
-    const seatIndex = userPlayer.seatIndex
+  transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex) {
     this.props.transferTiles({
       rowIndex,
       columnIndex,
       tileColor,
-      seatIndex
+      seatIndex,
     })
   }
 
   render() {
     const userPlayer = this.getUserPlayer()
     const opponents = this.getOpponents()
-    const rowsPendingTileTransfer = userPlayer && this.props.seatsRequiringInput[userPlayer.seatIndex]
+    const rowsPendingTileTransfer =
+      userPlayer && this.props.seatsRequiringInput[userPlayer.seatIndex]
     return (
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
-
           <div className="left-container">
             <FactoryList
               onTileSelectedInFactory={this.selectTileInFactory.bind(this)}
@@ -92,12 +92,12 @@ export default class Azul extends React.Component {
               factories={this.props.factories}
               tableTiles={this.props.tableTiles}
             />
-            <PlayerBoard 
+            <PlayerBoard
               player={userPlayer}
               activeSeatIndex={this.props.activeSeatIndex}
               selectedTiles={this.state.selectedTiles}
-              onRowSelected={this.selectPlacementRow.bind(this)}
-              placeTileInFinalRow={this.placeTileInFinalRow.bind(this)}
+              placeTilesFromFactory={this.placeTilesFromFactory.bind(this)}
+              transferTileToFinalRow={this.transferTileToFinalRow.bind(this)}
               rowsPendingTileTransfer={rowsPendingTileTransfer}
             />
           </div>
@@ -109,12 +109,8 @@ export default class Azul extends React.Component {
               <div>Turn: {this.props.currentTurnNumber || '-'}</div>
               <div>{`${this.getActivePlayer().username}'s turn`}</div>
             </div>
-            <OpponentList
-              activeSeatIndex={this.props.activeSeatIndex}
-              opponents={opponents}
-            />
+            <OpponentList activeSeatIndex={this.props.activeSeatIndex} opponents={opponents} />
           </div>
-
         </section>
       </>
     )

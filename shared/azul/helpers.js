@@ -6,10 +6,11 @@ const {
   TILE_PULL,
   REQUIRED_ORDER,
   TILE_TRANSFER,
+  TILE_DUMP,
   DROPPED_TILE_PENALTIES,
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
-  FIRST_PLAYER_TOKEN,
+  STARTING_PLAYER_TOKEN,
   GET_FACTORY_COUNT,
 } = require('./game-invariants')
 
@@ -103,6 +104,9 @@ function applyActions(state, actions) {
       case TILE_TRANSFER:
         newState = applyTileTransfer(newState, { payload: action })
         break
+      case TILE_DUMP:
+        newState = applyTileDump(newState)
+        break
       default:
         throw new Error('Unrecognized Azul action type')
     }
@@ -163,7 +167,7 @@ function applyTilePull(state, action) {
         // If this is the first player to pull from table tiles, give them the first player token
         const vacantIndex = player.brokenTiles.indexOf(null)
         if (vacantIndex !== -1) {
-          player.brokenTiles[vacantIndex] = FIRST_PLAYER_TOKEN
+          player.brokenTiles[vacantIndex] = STARTING_PLAYER_TOKEN
         }
         draft.firstSeatNextRound = params.seatIndex
       }
@@ -218,6 +222,7 @@ function applyTileTransfer(state, action) {
     const player = _.find(draft.players, { seatIndex })
 
     player.finalRows[rowIndex].tiles[columnIndex] = tileColor
+    player.score += scoreTilePlacement(player.finalRows, rowIndex, columnIndex)
     player.stagingRows[rowIndex].tiles.fill(null)
     draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(tileColor))
     draft.actionHistory = [
@@ -226,6 +231,64 @@ function applyTileTransfer(state, action) {
     ]
     draft.historyIndex++
   })
+}
+
+function applyTileDump(state) {
+  return produce(state, draft => {
+    draft.players.forEach(player => {
+      player.brokenTiles.forEach((brokenTile, index) => {
+        player.score += DROPPED_TILE_PENALTIES[index]
+      })
+      draft.discardTiles = draft.discardTiles.concat(player.brokenTiles)
+      player.brokenTiles = Array(DROPPED_TILE_PENALTIES.length).fill(null)
+    })
+    // It's _technically_ possible for no one to have pulled the starting player tile if all
+    // factories were filled with homogenous tiles. The rules don't even cover this case, but for
+    // the sake of fairness, let's just randomize the starting player in this scenario.
+    draft.activeSeatIndex = draft.firstSeatNextRound || Math.floor(Math.random() * draft.players.length)
+    draft.firstSeatNextRound = null
+  })
+}
+
+function scoreTilePlacement(rows, rowIndex, columnIndex) {
+  let horizontalNeighbors = []
+  let verticalNeighbors = []
+  let offset = 1
+  let continueLeft = columnIndex > 0
+  let continueRight = columnIndex < 4
+  let continueUp = rowIndex > 0
+  let continueDown = rowIndex < 0
+
+  while (continueLeft || continueRight || continueUp || continueDown) {
+    if (continueLeft && columnIndex - offset >= 0 && rows[rowIndex].tiles[columnIndex - offset] !== null) {
+      horizontalNeighbors.push(columnIndex - offset)
+    } else {
+      continueLeft = false
+    }
+
+    if (continueRight && columnIndex + offset <= 4 && rows[rowIndex].tiles[columnIndex + offset] !== null) {
+      horizontalNeighbors.push(columnIndex + offset)
+    } else {
+      continueRight = false
+    }
+
+    if (continueUp && rowIndex - offset >= 0 && rows[rowIndex - offset].tiles[columnIndex] !== null) {
+      verticalNeighbors.push(rowIndex - offset)
+    } else {
+      continueUp = false
+    }
+
+    if (continueDown && rowIndex + offset <= 4 && rows[rowIndex + offset].tiles[columnIndex] !== null) {
+      verticalNeighbors.push(rowIndex + offset)
+    } else {
+      continueDown = false
+    }
+
+    offset++
+  }
+
+  let baseScore = verticalNeighbors.length > 1 && horizontalNeighbors.length > 1 ? 2 : 1
+  return baseScore + verticalNeighbors.length + horizontalNeighbors.length
 }
 
 function checkForPendingTileTransfers(state) {
@@ -284,8 +347,6 @@ function checkForPendingTileTransfers(state) {
   })
 }
 
-const TILE_TYPES = TILE_COLORS.concat([null])
-
 /**
  * Converts a factory code into a list of tile types. A factory code is a 4 digit number where each
  * digit represents a tile color, or null.
@@ -296,13 +357,22 @@ const TILE_TYPES = TILE_COLORS.concat([null])
 function parseTilesFromFactoryCode(factoryCode) {
   let factory = []
   factoryCode.split('').forEach(tileCode => {
-    factory.push(TILE_TYPES[tileCode])
+    tileCode === 5 ? factory.push(null) : factory.push(TILE_COLORS[tileCode])
   })
   return factory
 }
 
 function createFactoryCodeFromTiles(tiles) {
-  return tiles.map(tile => TILE_TYPES.indexOf(tile)).join('')
+  let tileCodes = tiles.map(tile => {
+    if (tile === null || tile === undefined) {
+      return 5
+    }
+    return TILE_COLORS.indexOf(tile)
+  })
+  while (tileCodes.length < 4) {
+    tileCodes.push(5)
+  }
+  return tileCodes.join('')
 }
 
 module.exports = {
@@ -310,4 +380,5 @@ module.exports = {
   generateInitialFactoryRefills,
   applyActions,
   applyTilePull,
+  createFactoryCodeFromTiles,
 }

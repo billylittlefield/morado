@@ -29,7 +29,6 @@ function Lobby(props) {
             <th>Game</th>
             <th>Players</th>
             <th>Round</th>
-            <th>Turn</th>
             <th>Started</th>
             <th>Join</th>
           </tr>
@@ -41,7 +40,6 @@ function Lobby(props) {
                 <td>{game.options.name}</td>
                 <td>{game.usernames.join(', ')}</td>
                 <td>{game.latestRound || '-'}</td>
-                <td>{game.latestTurn ? game.latestTurn + 1 : '-'}</td>
                 <td>
                   {game.startTime ? moment(game.startTime).format('h:mma M/D/YY') : 'Not started'}
                 </td>

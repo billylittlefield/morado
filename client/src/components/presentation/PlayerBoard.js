@@ -8,11 +8,10 @@ function PlayerBoard(props) {
   if (!props.player) {
     return null
   }
-  const { stagingRows, finalRows, brokenTiles } = props.player
+  const { stagingRows, finalRows, brokenTiles, seatIndex } = props.player
+
   const isActiveAndHasPendingSelection =
-    props.player.seatIndex === props.activeSeatIndex &&
-    props.selectedTiles &&
-    props.selectedTiles.length > 0
+    seatIndex === props.activeSeatIndex && props.selectedTiles.length > 0
 
   function getPossibleStagingRowPlacements() {
     if (!isActiveAndHasPendingSelection) {
@@ -40,24 +39,44 @@ function PlayerBoard(props) {
     })
   }
 
+  const possibleRowPlacements = getPossibleStagingRowPlacements()
+
+  // Add one verification check before propagating action to ensure that the target row can
+  // accept the tiles from the factory
+  function verifyAndPlaceTilesFromFactory(rowIndex) {
+    if (possibleRowPlacements && possibleRowPlacements[rowIndex]) {
+      props.placeTilesFromFactory(rowIndex)
+    }
+  }
+
+  function verifyAndTransferTileToFinalRow(rowIndex, columnIndex) {
+    if (
+      props.rowsPendingTileTransfer &&
+      props.rowsPendingTileTransfer[rowIndex] &&
+      props.rowsPendingTileTransfer[rowIndex].includes(columnIndex)
+    ) {
+      const tileColor = stagingRows[rowIndex].tiles[0]
+      props.transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex)
+    }
+  }
+
   return (
     <div className={`player-board ${props.isOpponentBoard ? 'opponent-board' : 'own-board'}`}>
       <div className="player-info">
-        <span>{props.player.username}</span>
-        <span> - </span>
+        <span>{props.player.username} </span>
         <span>{props.player.score}</span>
       </div>
       <div className="staging-and-final-rows-container">
         <RowList
           isStaging={true}
           rows={stagingRows}
-          possibleRowPlacements={getPossibleStagingRowPlacements()}
-          onRowSelected={props.onRowSelected}
+          possibleRowPlacements={possibleRowPlacements}
+          onTileSelected={verifyAndPlaceTilesFromFactory}
         />
         <RowList
           isStaging={false}
           rows={finalRows}
-          onTileSelected={props.placeTileInFinalRow}
+          onTileSelected={verifyAndTransferTileToFinalRow}
           rowsPendingTileTransfer={props.rowsPendingTileTransfer}
         />
       </div>
@@ -66,7 +85,7 @@ function PlayerBoard(props) {
         rowSize={DROPPED_TILE_PENALTIES.length}
         rowIndex={-1}
         canAcceptPendingTiles={isActiveAndHasPendingSelection}
-        onRowSelected={props.onRowSelected}
+        onTileSelected={verifyAndPlaceTilesFromFactory}
       />
     </div>
   )

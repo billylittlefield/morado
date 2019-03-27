@@ -1,6 +1,6 @@
 // Update with your config settings.
 
-export default {
+module.exports = {
   development: {
     client: 'mysql',
     connection: {
@@ -11,10 +11,10 @@ export default {
       charset: 'utf8',
     },
     migrations: {
-      directory: './migrations',
+      directory: './db/migrations',
     },
     seeds: {
-      directory: './seeds/dev',
+      directory: './db/seeds/dev',
     },
     useNullAsDefault: true,
   },

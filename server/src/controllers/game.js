@@ -1,8 +1,10 @@
 import db from 'db'
 import _ from 'lodash'
+import produce from 'immer'
 
 import AzulHelpers from '@shared/azul/helpers'
-import { REQUIRED_ORDER, TILE_TRANSFER } from '@shared/azul/game-invariants'
+import { shuffle } from '@shared/util'
+import { REQUIRED_ORDER, TILE_TRANSFER, FACTORY_REFILL, TILE_DUMP } from '@shared/azul/game-invariants'
 
 async function createGame(options) {
   const gameId = (await db('games').insert({
@@ -72,7 +74,6 @@ async function fetchGamesByIds(gameIds) {
       ),
       userIds: db.raw('GROUP_CONCAT(DISTINCT users.id ORDER BY users.id SEPARATOR ",")'),
       latestRound: db.raw('MAX(azul_actions.round_number)'),
-      latestTurn: db.raw('MAX(azul_actions.turn_number)'),
       startTime: 'games.start_time',
       options: 'games.options',
     })
@@ -97,20 +98,24 @@ async function fetchGamesByIds(gameIds) {
 }
 
 async function startGameIfFull(gameId) {
-  const gameSize = parseInt((await db('games')
-  .select({
-    gameSize: db.raw('json_extract(games.options, "$.numPlayers")'),
-  })
-  .where('games.id', gameId))[0].gameSize)
-  
+  const gameSize = parseInt(
+    (await db('games')
+      .select({
+        gameSize: db.raw('json_extract(games.options, "$.numPlayers")'),
+      })
+      .where('games.id', gameId))[0].gameSize
+  )
+
   const numPlayers = (await db('game_plays')
-  .count('user_id as numPlayers')
-  .where('game_id', gameId))[0].numPlayers
-  
+    .count('user_id as numPlayers')
+    .where('game_id', gameId))[0].numPlayers
+
   if (gameSize === numPlayers) {
     const initialFactoryRefills = AzulHelpers.generateInitialFactoryRefills(gameSize)
     await saveAndApplyActions(gameId, initialFactoryRefills)
-    await db('games').where('games.id', gameId).update('start_time', new Date())
+    await db('games')
+      .where('games.id', gameId)
+      .update('start_time', new Date())
   }
 }
 
@@ -178,7 +183,40 @@ async function incrementRound(gameId) {
     .increment('current_round_number', 1)
 }
 
-function getTileTransfers(gameState) {
+function generateTileDump(gameState) {
+  return {
+    roundNumber: gameState.currentRoundNumber,
+    type: TILE_DUMP,
+  }
+}
+
+function generateFactoryRefills(gameState) {
+  let shuffledTiles = shuffle(_.cloneDeep(gameState.discardTiles)).concat(
+    shuffle(_.cloneDeep(gameState.freshTiles))
+  )
+
+  return gameState.factories.map((factory, factoryIndex) => {
+    let factoryTiles = []
+    while (factoryTiles.length < 4) {
+      if (shuffledTiles.length > 0) {
+        factoryTiles.push(shuffledTiles.pop())
+      } else {
+        break
+      }
+    }
+
+    return {
+      roundNumber: gameState.currentRoundNumber + 1,
+      type: FACTORY_REFILL,
+      params: {
+        factoryIndex,
+        factoryCode: AzulHelpers.createFactoryCodeFromTiles(factoryTiles),
+      },
+    }
+  })
+}
+
+function generateTileTransfers(gameState) {
   const { useColorTemplate } = gameState.options
   let tileTransfers = []
   // For every player
@@ -242,6 +280,8 @@ export default {
   getGameState,
   saveAndApplyActions,
   isRoundOver,
-  getTileTransfers,
+  generateTileTransfers,
+  generateFactoryRefills,
   incrementRound,
+  generateTileDump,
 }

@@ -8,7 +8,6 @@ function Row(props) {
     possibleTileTransfers,
     tiles,
     requiredOrder,
-    onRowSelected,
     onTileSelected
   } = props
 
@@ -29,12 +28,6 @@ function Row(props) {
     })
   }
 
-  function handleClick() {
-    if (canAcceptPendingTiles) {
-      onRowSelected(rowIndex)
-    }
-  }
-
   let classList = 'row'
   if (canAcceptPendingTiles) {
     classList += ' active'
@@ -43,7 +36,7 @@ function Row(props) {
     classList += ' broken-tiles'
   }
   return (
-    <div className={classList} onClick={handleClick}>
+    <div className={classList}>
       {renderSquares()}
     </div>
   )

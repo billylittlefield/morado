@@ -25,7 +25,6 @@ gameRouter.route('/').post(async (req, res) => {
       usernames: [req.session.userInfo.username],
       userIds: [req.session.userInfo.userId],
       latestRound: null,
-      latestTurn: null,
       startTime: null,
       options
     })

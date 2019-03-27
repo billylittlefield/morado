@@ -33,10 +33,11 @@ async function joinGame(io, socket, gameId, userInfo) {
 
     if (GameController.isRoundOver(newState)) {
       io.in(`azul:${gameId}`).emit('endOfRound', newState.currentRoundNumber)
-      const tileTransfers = GameController.getTileTransfers(newState)
-      newState = await GameController.saveAndApplyActions(gameId, tileTransfers, newState)
+      const tileDump = GameController.generateTileDump(newState)
+      const tileTransfers = GameController.generateTileTransfers(newState)
+      newState = await GameController.saveAndApplyActions(gameId, [tileDump, ...tileTransfers], newState)
       io.in(`azul:${gameId}`).emit('gameUpdate', newState)
-      startRoundIfReady(newState, gameId, newState.currentRoundNumber + 1)
+      startRoundIfReady(gameId, newState, newState.currentRoundNumber + 1)
     }
   })
 
@@ -49,14 +50,17 @@ async function joinGame(io, socket, gameId, userInfo) {
     }
 
     io.in(`azul:${gameId}`).emit('gameUpdate', newState)
-    startRoundIfReady(newState, gameId, newState.currentRoundNumber + 1)
+    startRoundIfReady(gameId, newState, newState.currentRoundNumber + 1)
   })
-}
 
-async function startRoundIfReady(state, gameId, newRoundNumber) {
-  if (state.seatsRequiringInput.length === 0) {
-    await GameController.incrementRound(gameId)
-    io.in(`azul:${gameId}`).emit('startOfRound', newRoundNumber)
+  async function startRoundIfReady(gameId, state, newRoundNumber) {
+    if (Object.keys(state.seatsRequiringInput).length === 0) {
+      let newState = await GameController.incrementRound(gameId)
+      io.in(`azul:${gameId}`).emit('startOfRound', newRoundNumber)
+      const factoryRefills = GameController.generateFactoryRefills(state)
+      newState = await GameController.saveAndApplyActions(gameId, factoryRefills, state)
+      io.in(`azul:${gameId}`).emit('gameUpdate', newState)
+    }
   }
 }
 
