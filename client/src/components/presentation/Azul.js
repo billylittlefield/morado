@@ -1,15 +1,121 @@
 import React from 'react'
 import _ from 'lodash'
 import { Link } from 'react-router-dom'
+import Tether from 'tether'
 
 import OpponentList from 'components/presentation/OpponentList'
 import FactoryList from 'components/presentation/FactoryList'
 import PlayerBoard from 'components/presentation/PlayerBoard'
+import TilePieces from 'components/presentation/TilePieces'
 
 export default class Azul extends React.Component {
-  state = {
-    selectedFactoryIndex: null,
-    selectedTiles: [],
+  constructor(props) {
+    super(props)
+    this.state = {
+      selectedFactoryIndex: null,
+      selectedTiles: [],
+    }
+    // this.tileMap = {}
+    // this.initializeTileMap()
+  }
+
+  initializeTileMap() {
+    let tileList = []
+    this.props.factories.forEach((factory, factoryIndex) => {
+      factory.forEach((tileColor, positionIndex) => {
+        tileList.push({
+          id: this.getUniqueId(),
+          targetLocation: `f${factoryIndex}${positionIndex}`,
+          tileColor,
+        })
+      })
+    })
+    this.props.players.forEach((player, seatIndex) => {
+      player.stagingRows.forEach((stagingRow, rowIndex) => {
+        stagingRow.tiles.forEach((tileColor, positionIndex) => {
+          if (tileColor === null) {
+            return
+          }
+          tileList.push({
+            id: this.getUniqueId(),
+            targetLocation: `p${seatIndex}s${rowIndex}${positionIndex}`,
+            tileColor,
+          })
+        })
+      })
+      player.finalRows.forEach((finalRow, rowIndex) => {
+        finalRow.tiles.forEach((tileColor, positionIndex) => {
+          if (tileColor === null) {
+            return
+          }
+          tileList.push({
+            id: this.getUniqueId(),
+            targetLocation: `p${seatIndex}f${rowIndex}${positionIndex}`,
+            tileColor,
+          })
+        })
+      })
+      player.brokenTiles.forEach((tileColor, positionIndex) => {
+        if (tileColor === null) {
+          return
+        }
+        tileList.push({
+          id: this.getUniqueId(),
+          targetLocation: `p${seatIndex}b${positionIndex}`,
+          tileColor,
+        })
+      })
+    })
+
+    tileList.forEach(t => (this.tileMap[t.id] = { ...t }))
+  }
+
+  // componentDidUpdate() {
+  //   this.updateTethers()
+  // }
+
+  updateTethers() {
+    const tileMap = this.tileMap
+
+    visibleTiles.forEach(tile => {
+      // update existing tethers
+      let tileMapRecord = tileMap[tile.id]
+      if (tileMapRecord) {
+        tileMapRecord.tether.setOptions({
+          ...tether.options,
+          target: `#${tile.targetLocation}`,
+        })
+      } else {
+        // create new tethers
+        tileMap[tile.id] = {
+          tether: new Tether({
+            element: `#${tile.id}`,
+            target: `#${tile.targetLocation}`,
+            attachment: 'top left',
+            targetAttachment: 'top left',
+          }),
+        }
+      }
+    })
+
+    // remove old tethers
+    _.difference(Object.keys(tileMap), _.map(visibleTiles, 'id')).forEach(keyToRemove => {
+      tileMap[keyToRemove].tether.destroy()
+      delete tileMap[keyToRemove]
+    })
+  }
+
+  getUniqueId() {
+    return (
+      '_' +
+      Math.random()
+        .toString(36)
+        .substr(2, 9) +
+      '_' +
+      Math.random()
+        .toString(36)
+        .substr(2, 9)
+    )
   }
 
   getUserPlayer() {
@@ -84,6 +190,10 @@ export default class Azul extends React.Component {
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
+          <TilePieces
+            tileList={this.props.tileList}
+          />
+          <div id="tile-container" />
           <div className="left-container">
             <FactoryList
               onTileSelectedInFactory={this.selectTileInFactory.bind(this)}

@@ -1,3 +1,11 @@
+.tile {
+  height: 20px;
+  width: 20px;
+  position: absolute;
+  background-color: fuchsia;
+  transition: transform 1s; 
+}
+
 // ==============================
 // Containers
 // ==============================

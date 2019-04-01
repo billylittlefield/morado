@@ -4,9 +4,9 @@ const { produce } = require('immer')
 const {
   FACTORY_REFILL,
   TILE_PULL,
-  REQUIRED_ORDER,
   TILE_TRANSFER,
   TILE_DUMP,
+  REQUIRED_ORDER,
   DROPPED_TILE_PENALTIES,
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
@@ -91,32 +91,34 @@ function generateInitialFactoryRefills(gameSize) {
     })
 }
 
-function applyActions(state, actions) {
-  let newState = _.cloneDeep(state)
-  actions.forEach(action => {
-    switch (action.type) {
-      case FACTORY_REFILL:
-        newState = applyFactoryRefill(newState, { payload: action })
-        break
-      case TILE_PULL:
-        newState = applyTilePull(newState, { payload: action })
-        break
-      case TILE_TRANSFER:
-        newState = applyTileTransfer(newState, { payload: action })
-        break
-      case TILE_DUMP:
-        newState = applyTileDump(newState)
-        break
-      default:
-        throw new Error('Unrecognized Azul action type')
-    }
-  })
+function applyGameActions(state, action) {
+  return action.payload.reduce((state, action) => applyGameAction(state, action), state)
+}
+
+function applyGameAction(state, action) {
+  let newState;
+  switch (action.type) {
+    case FACTORY_REFILL:
+      newState = applyFactoryRefill(state, action)
+      break
+    case TILE_PULL:
+      newState = applyTilePull(state, action)
+      break
+    case TILE_TRANSFER:
+      newState = applyTileTransfer(state, action)
+      break
+    case TILE_DUMP:
+      newState = applyTileDump(state)
+      break
+    default:
+      throw new Error('Unrecognized Azul action type')
+  }
   newState = checkForPendingTileTransfers(newState)
   return newState
 }
 
 function applyFactoryRefill(state, action) {
-  const { roundNumber, turnNumber, params } = action.payload
+  const { roundNumber, params } = action
 
   return produce(state, draft => {
     const tiles = parseTilesFromFactoryCode(params.factoryCode)
@@ -140,10 +142,7 @@ function applyFactoryRefill(state, action) {
       draft.freshTiles.splice(freshTileIndex, 1)
       draft.factories[params.factoryIndex].push(tile)
     })
-    draft.actionHistory = [
-      ...draft.actionHistory.slice(0, draft.historyIndex),
-      { roundNumber, turnNumber, params },
-    ]
+    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), action]
     draft.historyIndex++
     draft.currentRoundNumber = roundNumber
     draft.currentTurnNumber = 1
@@ -151,7 +150,7 @@ function applyFactoryRefill(state, action) {
 }
 
 function applyTilePull(state, action) {
-  const { roundNumber, turnNumber, params } = action.payload
+  const { turnNumber, params } = action
   const { seatIndex, factoryIndex, tileColor, targetRowIndex } = params
 
   return produce(state, draft => {
@@ -204,10 +203,7 @@ function applyTilePull(state, action) {
       }
     })
 
-    draft.actionHistory = [
-      ...draft.actionHistory.slice(0, draft.historyIndex),
-      { roundNumber, turnNumber, params },
-    ]
+    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), action]
     draft.historyIndex++
     draft.currentTurnNumber = turnNumber + 1
     draft.activeSeatIndex = (draft.activeSeatIndex + 1) % draft.players.length
@@ -215,8 +211,7 @@ function applyTilePull(state, action) {
 }
 
 function applyTileTransfer(state, action) {
-  const { roundNumber, turnNumber, params } = action.payload
-  const { seatIndex, rowIndex, columnIndex, tileColor } = params
+  const { seatIndex, rowIndex, columnIndex, tileColor } = action.params
 
   return produce(state, draft => {
     const player = _.find(draft.players, { seatIndex })
@@ -225,10 +220,7 @@ function applyTileTransfer(state, action) {
     player.score += scoreTilePlacement(player.finalRows, rowIndex, columnIndex)
     player.stagingRows[rowIndex].tiles.fill(null)
     draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(tileColor))
-    draft.actionHistory = [
-      ...draft.actionHistory.slice(0, draft.historyIndex),
-      { roundNumber, turnNumber, params },
-    ]
+    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), action]
     draft.historyIndex++
   })
 }
@@ -245,8 +237,13 @@ function applyTileDump(state) {
     // It's _technically_ possible for no one to have pulled the starting player tile if all
     // factories were filled with homogenous tiles. The rules don't even cover this case, but for
     // the sake of fairness, let's just randomize the starting player in this scenario.
-    draft.activeSeatIndex = draft.firstSeatNextRound || Math.floor(Math.random() * draft.players.length)
+    draft.activeSeatIndex =
+      draft.firstSeatNextRound === null
+        ? Math.floor(Math.random() * draft.players.length)
+        : draft.firstSeatNextRound
     draft.firstSeatNextRound = null
+    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), { type: TILE_DUMP }]
+    draft.historyIndex++
   })
 }
 
@@ -260,25 +257,41 @@ function scoreTilePlacement(rows, rowIndex, columnIndex) {
   let continueDown = rowIndex < 0
 
   while (continueLeft || continueRight || continueUp || continueDown) {
-    if (continueLeft && columnIndex - offset >= 0 && rows[rowIndex].tiles[columnIndex - offset] !== null) {
+    if (
+      continueLeft &&
+      columnIndex - offset >= 0 &&
+      rows[rowIndex].tiles[columnIndex - offset] !== null
+    ) {
       horizontalNeighbors.push(columnIndex - offset)
     } else {
       continueLeft = false
     }
 
-    if (continueRight && columnIndex + offset <= 4 && rows[rowIndex].tiles[columnIndex + offset] !== null) {
+    if (
+      continueRight &&
+      columnIndex + offset <= 4 &&
+      rows[rowIndex].tiles[columnIndex + offset] !== null
+    ) {
       horizontalNeighbors.push(columnIndex + offset)
     } else {
       continueRight = false
     }
 
-    if (continueUp && rowIndex - offset >= 0 && rows[rowIndex - offset].tiles[columnIndex] !== null) {
+    if (
+      continueUp &&
+      rowIndex - offset >= 0 &&
+      rows[rowIndex - offset].tiles[columnIndex] !== null
+    ) {
       verticalNeighbors.push(rowIndex - offset)
     } else {
       continueUp = false
     }
 
-    if (continueDown && rowIndex + offset <= 4 && rows[rowIndex + offset].tiles[columnIndex] !== null) {
+    if (
+      continueDown &&
+      rowIndex + offset <= 4 &&
+      rows[rowIndex + offset].tiles[columnIndex] !== null
+    ) {
       verticalNeighbors.push(rowIndex + offset)
     } else {
       continueDown = false
@@ -329,7 +342,7 @@ function checkForPendingTileTransfers(state) {
           player.finalRows[rowIndex].tiles[columnIndex] === null
         )
       })
-      
+
       if (possibleColumnIndices.length > 1) {
         const rowIndexToColumnIndexMap = { [rowIndex]: possibleColumnIndices }
         // If there are more than one available index, we can't auto-perform this transfer
@@ -378,7 +391,9 @@ function createFactoryCodeFromTiles(tiles) {
 module.exports = {
   getInitialGameState,
   generateInitialFactoryRefills,
-  applyActions,
+  applyGameAction,
+  applyGameActions,
   applyTilePull,
+  applyTileTransfer,
   createFactoryCodeFromTiles,
 }

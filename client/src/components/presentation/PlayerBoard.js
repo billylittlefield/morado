@@ -44,7 +44,7 @@ function PlayerBoard(props) {
   // Add one verification check before propagating action to ensure that the target row can
   // accept the tiles from the factory
   function verifyAndPlaceTilesFromFactory(rowIndex) {
-    if (possibleRowPlacements && possibleRowPlacements[rowIndex]) {
+    if (rowIndex === -1 || (possibleRowPlacements && possibleRowPlacements[rowIndex])) {
       props.placeTilesFromFactory(rowIndex)
     }
   }
@@ -68,19 +68,22 @@ function PlayerBoard(props) {
       </div>
       <div className="staging-and-final-rows-container">
         <RowList
+          id={`p${seatIndex}s`}
           isStaging={true}
           rows={stagingRows}
           possibleRowPlacements={possibleRowPlacements}
           onTileSelected={verifyAndPlaceTilesFromFactory}
         />
         <RowList
+          id={`p${seatIndex}f`}
           isStaging={false}
           rows={finalRows}
-          onTileSelected={verifyAndTransferTileToFinalRow}
           rowsPendingTileTransfer={props.rowsPendingTileTransfer}
+          onTileSelected={verifyAndTransferTileToFinalRow}
         />
       </div>
       <Row
+        id={`p${seatIndex}b`}
         tiles={brokenTiles}
         rowSize={DROPPED_TILE_PENALTIES.length}
         rowIndex={-1}

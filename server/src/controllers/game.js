@@ -1,6 +1,5 @@
 import db from 'db'
 import _ from 'lodash'
-import produce from 'immer'
 
 import AzulHelpers from '@shared/azul/helpers'
 import { shuffle } from '@shared/util'
@@ -148,8 +147,7 @@ async function getGameState(gameId) {
     })
 
   const initialState = AzulHelpers.getInitialGameState(players, game.options)
-  const currentState = AzulHelpers.applyActions(initialState, gameActions)
-
+  const currentState = AzulHelpers.applyGameActions(initialState, { payload: gameActions })
   return currentState
 }
 
@@ -157,7 +155,7 @@ async function saveAndApplyActions(gameId, gameActions, gameState = null) {
   if (gameState === null) {
     gameState = await getGameState(gameId)
   }
-  const updatedState = await AzulHelpers.applyActions(gameState, gameActions)
+  const updatedState = await AzulHelpers.applyGameActions(gameState, { payload: gameActions })
 
   await db('azul_actions').insert(
     gameActions.map(action => ({
@@ -185,8 +183,8 @@ async function incrementRound(gameId) {
 
 function generateTileDump(gameState) {
   return {
-    roundNumber: gameState.currentRoundNumber,
     type: TILE_DUMP,
+    roundNumber: gameState.currentRoundNumber,
   }
 }
 
@@ -206,8 +204,9 @@ function generateFactoryRefills(gameState) {
     }
 
     return {
-      roundNumber: gameState.currentRoundNumber + 1,
       type: FACTORY_REFILL,
+      roundNumber: gameState.currentRoundNumber + 1,
+      turnNumber: null,
       params: {
         factoryIndex,
         factoryCode: AzulHelpers.createFactoryCodeFromTiles(factoryTiles),

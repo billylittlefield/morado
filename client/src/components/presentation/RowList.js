@@ -9,6 +9,7 @@ function RowList(props) {
     return rows.map((row, rowIndex) => {
         return (
         <Row
+          id={`${props.id}${rowIndex}`}
           key={rowIndex}
           rowIndex={rowIndex}
           onTileSelected={props.onTileSelected}

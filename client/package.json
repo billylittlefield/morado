@@ -53,6 +53,7 @@
     "redux-actions": "^2.6.4",
     "redux-undo": "^0.6.1",
     "socket.io": "^2.2.0",
+    "tether": "^1.4.5",
     "universal-cookie": "^3.0.7",
     "webpack": "^4.29.5"
   }

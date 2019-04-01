@@ -36,7 +36,7 @@ const sessionMiddleware = session({
   saveUninitialized: false,
   resave: false,
   cookie: {
-    maxAge: 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   },
   name: 'session_id',
   domain: 'http://localhost:8080',
@@ -66,17 +66,17 @@ app.use('/json', () => {})
  * If the user is already logged in, or is attempting to login, continue to appropriate router.
  * Otherwise, 401 here and do not continue to route.
  */
-// app.use((req, res, next) => {
-//   if (req.url.startsWith('/auth')) {
-//     return next()
-//   }
+app.use((req, res, next) => {
+  if (req.url.startsWith('/auth')) {
+    return next()
+  }
 
-//   if (req.session.userInfo) {
-//     return next()
-//   }
+  if (req.session.userInfo) {
+    return next()
+  }
 
-//   res.status(401).end()
-// })
+  res.status(401).end()
+})
 
 /**
  * =========== ROUTES ===========

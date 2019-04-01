@@ -6,6 +6,7 @@ function Factory(props) {
     return tileColors.map((tileColor, index) => {
       return (
         <TileSquare
+          id={`f${props.factoryIndex}${index}`}
           isSelected={props.isFactorySelected && props.selectedTileColor === tileColor}
           key={index}
           bgColor={null}

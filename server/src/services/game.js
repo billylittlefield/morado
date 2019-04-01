@@ -23,43 +23,52 @@ async function joinGame(io, socket, gameId, userInfo) {
   io.in(`azul:${gameId}`).emit('gameUpdate', gameState)
 
   socket.on('pullAndStageTiles', async gameAction => {
-    let newState
+    // Update the other clients in the room
+    socket.to(`azul:${gameId}`).emit('pullAndStageTiles', gameAction)
+
+    let updatedState
     try {
-      newState = await GameController.saveAndApplyActions(gameId, [gameAction])
+      updatedState = await GameController.saveAndApplyActions(gameId, [gameAction])
     } catch (err) {
       throw err
     }
-    io.in(`azul:${gameId}`).emit('gameUpdate', newState)
+    io.in(`azul:${gameId}`).emit('gameUpdate', updatedState)
 
-    if (GameController.isRoundOver(newState)) {
-      io.in(`azul:${gameId}`).emit('endOfRound', newState.currentRoundNumber)
-      const tileDump = GameController.generateTileDump(newState)
-      const tileTransfers = GameController.generateTileTransfers(newState)
-      newState = await GameController.saveAndApplyActions(gameId, [tileDump, ...tileTransfers], newState)
-      io.in(`azul:${gameId}`).emit('gameUpdate', newState)
-      startRoundIfReady(gameId, newState, newState.currentRoundNumber + 1)
+    if (GameController.isRoundOver(updatedState)) {
+      io.in(`azul:${gameId}`).emit('endOfRound', updatedState.currentRoundNumber)
+      const tileDump = GameController.generateTileDump(updatedState)
+      const tileTransfers = GameController.generateTileTransfers(updatedState)
+      const newActions = [tileDump, ...tileTransfers]
+      io.in(`azul:${gameId}`).emit('gameActions', newActions)
+      updatedState = await GameController.saveAndApplyActions(gameId, newActions, updatedState)
+      io.in(`azul:${gameId}`).emit('gameUpdate', updatedState)
+      startRoundIfReady(gameId, updatedState, updatedState.currentRoundNumber + 1)
     }
   })
 
   socket.on('transferTiles', async gameAction => {
-    let newState
+    // Update the other clients in the room
+    socket.to(`azul:${gameId}`).emit('transferTiles', gameAction)
+
+    let updatedState
     try {
-      newState = await GameController.saveAndApplyActions(gameId, [gameAction])
+      updatedState = await GameController.saveAndApplyActions(gameId, [gameAction])
     } catch (err) {
       throw err
     }
+    io.in(`azul:${gameId}`).emit('gameUpdate', updatedState)
 
-    io.in(`azul:${gameId}`).emit('gameUpdate', newState)
-    startRoundIfReady(gameId, newState, newState.currentRoundNumber + 1)
+    startRoundIfReady(gameId, updatedState, updatedState.currentRoundNumber + 1)
   })
 
   async function startRoundIfReady(gameId, state, newRoundNumber) {
     if (Object.keys(state.seatsRequiringInput).length === 0) {
-      let newState = await GameController.incrementRound(gameId)
+      await GameController.incrementRound(gameId)
       io.in(`azul:${gameId}`).emit('startOfRound', newRoundNumber)
       const factoryRefills = GameController.generateFactoryRefills(state)
-      newState = await GameController.saveAndApplyActions(gameId, factoryRefills, state)
-      io.in(`azul:${gameId}`).emit('gameUpdate', newState)
+      io.in(`azul:${gameId}`).emit('gameActions', factoryRefills)
+      let updatedState = await GameController.saveAndApplyActions(gameId, factoryRefills, state)
+      io.in(`azul:${gameId}`).emit('gameUpdate', updatedState)
     }
   }
 }
@@ -70,6 +79,10 @@ export default function(io) {
       const userInfo = socket.request.session.userInfo
       validateUser(socket)
       joinGame(io, socket, gameId, userInfo)
+    })
+
+    socket.on('leaveGame', gameId => {
+      socket.leave(`azul:${gameId}`)
     })
   }
 }

@@ -18,6 +18,7 @@ function Row(props) {
         possibleTileTransfers && possibleTileTransfers.includes(columnIndex)
       return (
         <TileSquare
+          id={`${props.id}${columnIndex}`}
           key={columnIndex}
           tileColor={tileColor}
           bgColor={bgColor}
