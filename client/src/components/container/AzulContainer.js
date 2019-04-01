@@ -13,7 +13,7 @@ import {
   transferTiles,
   receiveGameActions,
 } from 'redux/actions'
-import { TILE_PULL, TILE_TRANSFER, DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants'
+import { TILE_PULL, TILE_TRANSFER, DROPPED_TILE_PENALTIES, TILE_COLORS } from '@shared/azul/game-invariants'
 import Azul from 'components/presentation/Azul'
 
 class AzulContainer extends React.Component {
@@ -58,7 +58,7 @@ class AzulContainer extends React.Component {
         })
         socket.on('gameActions', gameActions => {
           this.props.receiveGameActions(gameActions)
-          this.updateTethers(gameActions)
+          gameActions.forEach(a => this.updateTethers(a))
         })
 
         socket.emit('joinGame', gameId)
@@ -162,11 +162,30 @@ class AzulContainer extends React.Component {
     this.setState({ tileList })
   }
 
+  addTilesForFactoryRefill(params) {
+    const { factoryCode, factoryIndex } = params
+    let newTiles = []
+    factoryCode.split('').forEach((tileIndex, positionIndex) => {
+      if (tileIndex === '5') {
+        return
+      }
+      const tileColor = TILE_COLORS[parseInt(tileIndex)]
+      newTiles.push({
+        id: this.getUniqueId(),
+        targetLocation: `f${factoryIndex}${positionIndex}`,
+        tileColor
+      })
+    })
+
+    this.setState({ tileList: tileList.concat(newTiles) })
+    this.initializeTethers()
+  }
+
   updateTethers(gameAction) {
     const { params } = gameAction
     switch (gameAction.type) {
       case 'FACTORY_REFILL':
-        // this.addTiles(params)
+        this.addTilesForFactoryRefill(params)
         break
       case 'TILE_PULL':
         this.updateTethersForTilePull(params)
@@ -258,7 +277,7 @@ class AzulContainer extends React.Component {
     this.props.pullAndStageTiles(gameAction)
     // Update server state:
     this.props.socket.emit('pullAndStageTiles', gameAction)
-    // Update tiles:
+    // Update tile positions:
     this.updateTethersForTilePull(gameAction.params)
   }
 
