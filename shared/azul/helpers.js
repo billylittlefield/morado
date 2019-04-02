@@ -10,7 +10,7 @@ const {
   DROPPED_TILE_PENALTIES,
   TILE_COLORS,
   NUM_TILES_OF_COLOR,
-  STARTING_PLAYER_TOKEN,
+  STARTING_PLAYER,
   GET_FACTORY_COUNT,
 } = require('./game-invariants')
 
@@ -31,7 +31,7 @@ function getInitialGameState(players, options) {
       .fill()
       .map(() => []),
     discardTiles: [],
-    tableTiles: [],
+    tableTiles: [STARTING_PLAYER],
     currentRoundNumber: null,
     currentTurnNumber: null,
     firstSeatNextRound: null,
@@ -96,7 +96,7 @@ function applyGameActions(state, action) {
 }
 
 function applyGameAction(state, action) {
-  let newState;
+  let newState
   switch (action.type) {
     case FACTORY_REFILL:
       newState = applyFactoryRefill(state, action)
@@ -108,7 +108,7 @@ function applyGameAction(state, action) {
       newState = applyTileTransfer(state, action)
       break
     case TILE_DUMP:
-      newState = applyTileDump(state)
+      newState = applyTileDump(state, action)
       break
     default:
       throw new Error('Unrecognized Azul action type')
@@ -163,14 +163,12 @@ function applyTilePull(state, action) {
     if (factoryIndex === -1) {
       // PLAYER PULLED FROM TABLE TILES
       if (draft.firstSeatNextRound === null) {
-        // If this is the first player to pull from table tiles, give them the first player token
-        const vacantIndex = player.brokenTiles.indexOf(null)
-        if (vacantIndex !== -1) {
-          player.brokenTiles[vacantIndex] = STARTING_PLAYER_TOKEN
-        }
         draft.firstSeatNextRound = params.seatIndex
       }
-      ;[selectedTiles, leftoverTiles] = _.partition(draft.tableTiles, t => t === tileColor)
+      ;[selectedTiles, leftoverTiles] = _.partition(
+        draft.tableTiles,
+        t => t === tileColor || t === STARTING_PLAYER
+      )
       draft.tableTiles = leftoverTiles
     } else {
       // PLAYER PULLED FROM FACTORY
@@ -183,9 +181,15 @@ function applyTilePull(state, action) {
     }
 
     ;(selectedTiles || []).forEach(tile => {
-      // Find target staging row from index. If the index is -1, use broken tile row.
+      if (tile === STARTING_PLAYER) {
+        let vacantIndex = player.brokenTiles.indexOf(null)
+        if (vacantIndex !== -1) {
+          player.brokenTiles[vacantIndex] = tile
+        }
+        return
+      }
       let targetRow =
-        targetRowIndex !== -1 ? player.stagingRows[targetRowIndex].tiles : player.brokenTiles
+        targetRowIndex === -1 ? player.brokenTiles : player.stagingRows[targetRowIndex].tiles
       let vacantIndex = targetRow.indexOf(null)
 
       if (vacantIndex !== -1) {
@@ -225,7 +229,8 @@ function applyTileTransfer(state, action) {
   })
 }
 
-function applyTileDump(state) {
+function applyTileDump(state, action) {
+  const { firstSeatNextRound } = action.params
   return produce(state, draft => {
     draft.players.forEach(player => {
       player.brokenTiles.forEach((brokenTile, index) => {
@@ -234,15 +239,11 @@ function applyTileDump(state) {
       draft.discardTiles = draft.discardTiles.concat(player.brokenTiles)
       player.brokenTiles = Array(DROPPED_TILE_PENALTIES.length).fill(null)
     })
-    // It's _technically_ possible for no one to have pulled the starting player tile if all
-    // factories were filled with homogenous tiles. The rules don't even cover this case, but for
-    // the sake of fairness, let's just randomize the starting player in this scenario.
-    draft.activeSeatIndex =
-      draft.firstSeatNextRound === null
-        ? Math.floor(Math.random() * draft.players.length)
-        : draft.firstSeatNextRound
+
+    draft.tableTiles = [STARTING_PLAYER]
+    draft.activeSeatIndex = firstSeatNextRound
     draft.firstSeatNextRound = null
-    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), { type: TILE_DUMP }]
+    draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), action]
     draft.historyIndex++
   })
 }

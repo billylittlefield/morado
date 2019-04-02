@@ -13,7 +13,13 @@ import {
   transferTiles,
   receiveGameActions,
 } from 'redux/actions'
-import { TILE_PULL, TILE_TRANSFER, DROPPED_TILE_PENALTIES, TILE_COLORS } from '@shared/azul/game-invariants'
+import {
+  TILE_PULL,
+  TILE_TRANSFER,
+  DROPPED_TILE_PENALTIES,
+  TILE_COLORS,
+  STARTING_PLAYER,
+} from '@shared/azul/game-invariants'
 import Azul from 'components/presentation/Azul'
 
 class AzulContainer extends React.Component {
@@ -71,7 +77,20 @@ class AzulContainer extends React.Component {
 
   validateGameState(gameState) {
     if (!_.isEqual(gameState, this.props.gameState)) {
+      function difference(object, base) {
+        function changes(object, base) {
+          return _.transform(object, function(result, value, key) {
+            if (!_.isEqual(value, base[key])) {
+              result[key] =
+                _.isObject(value) && _.isObject(base[key]) ? changes(value, base[key]) : value
+            }
+          })
+        }
+        return changes(object, base)
+      }
+      debugger
       console.log('houston we have a mismatch')
+      console.log(difference(gameState, this.props.gameState))
       this.props.receiveGameState({ gameState })
     }
   }
@@ -162,6 +181,24 @@ class AzulContainer extends React.Component {
     this.setState({ tileList })
   }
 
+  updateTethers(gameAction) {
+    const { params } = gameAction
+    switch (gameAction.type) {
+      case 'FACTORY_REFILL':
+        this.addTilesForFactoryRefill(params)
+        break
+      case 'TILE_PULL':
+        this.updateTethersForTilePull(params)
+        break
+      case 'TILE_TRANSFER':
+        this.transferTilesToFinalRow(params)
+        break
+      case 'TILE_DUMP':
+        this.removeBrokenTiles()
+        break
+    }
+  }
+
   addTilesForFactoryRefill(params) {
     const { factoryCode, factoryIndex } = params
     let newTiles = []
@@ -173,57 +210,43 @@ class AzulContainer extends React.Component {
       newTiles.push({
         id: this.getUniqueId(),
         targetLocation: `f${factoryIndex}${positionIndex}`,
-        tileColor
+        tileColor,
       })
     })
 
-    this.setState({ tileList: tileList.concat(newTiles) })
+    this.setState({ tileList: [...this.state.tileList, ...newTiles] })
     this.initializeTethers()
-  }
-
-  updateTethers(gameAction) {
-    const { params } = gameAction
-    switch (gameAction.type) {
-      case 'FACTORY_REFILL':
-        this.addTilesForFactoryRefill(params)
-        break
-      case 'TILE_PULL':
-        this.updateTethersForTilePull(params)
-        break
-      case 'TILE_TRANSFER':
-        // this.transferTiles(params)
-        break
-      case 'TILE_DUMP':
-        // this.dumpTiles()
-        break
-    }
   }
 
   updateTethersForTilePull(params) {
     const { seatIndex, factoryIndex, tileColor, targetRowIndex } = params
     const tileList = this.state.tileList
     const brokenTiles = tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}b`))
-    const targetRowTiles = targetRowIndex === -1 ? brokenTiles : tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}s${targetRowIndex}`))
+    const targetRowTiles =
+      targetRowIndex === -1
+        ? brokenTiles
+        : tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}s${targetRowIndex}`))
     const currentRowCount = targetRowTiles.length
     const currentBrokenTileCount = brokenTiles.length
     let numToBrokenTiles = 0
     let tileIdsToRemove = []
 
-    const tilesToPlayer = this.state.tileList.filter(tile => {
-      if (tile.tileColor !== tileColor) {
-        return false
-      }
-      if (factoryIndex === -1) {
-        return tile.targetLocation.startsWith('t')
-      } else {
-        return tile.targetLocation.startsWith(`f${factoryIndex}`)
-      }
-    })
-    const tilesToTable = factoryIndex === -1 ? [] : this.state.tileList.filter(tile => {
-      return tile.targetLocation.startsWith(`f${factoryIndex}`) && tile.tileColor !== tileColor
-    })
+    const [tilesToPlayer, tilesToTable] = _.partition(
+      this.state.tileList.filter(tile => {
+        if (factoryIndex === -1) {
+          return (
+            tile.targetLocation.startsWith('t') &&
+            (tile.tileColor === tileColor || tile.tileColor === STARTING_PLAYER)
+          )
+        } else {
+          return tile.targetLocation.startsWith(`f${factoryIndex}`)
+        }
+      }),
+      tile => tile.tileColor === tileColor || tile.tileColor === STARTING_PLAYER
+    )
+
     tilesToPlayer.forEach((tile, index) => {
-      if (currentRowCount + index <= targetRowIndex) {
+      if (currentRowCount + index <= targetRowIndex && tile !== STARTING_PLAYER) {
         tile.targetLocation = `p${seatIndex}s${targetRowIndex}${currentRowCount + index}`
         tile.tether.setOptions({
           element: `#${tile.id}`,
@@ -245,17 +268,41 @@ class AzulContainer extends React.Component {
       }
     })
 
-    tilesToTable.concat(this.state.tileList.filter(t => t.targetLocation.startsWith('t'))).forEach((tile, index) => {
-      tile.targetLocation = `t${index}`
-      tile.tether.setOptions({
-        element: `#${tile.id}`,
-        target: `#${tile.targetLocation}`,
-        attachment: 'top left',
-        targetAttachment: 'top left',
+    tilesToTable
+      .concat(this.state.tileList.filter(t => t.targetLocation.startsWith('t')))
+      .forEach((tile, index) => {
+        tile.targetLocation = `t${index}`
+        tile.tether.setOptions({
+          element: `#${tile.id}`,
+          target: `#${tile.targetLocation}`,
+          attachment: 'top left',
+          targetAttachment: 'top left',
+        })
       })
-    })
 
     _.remove(this.state.tileList, t => tileIdsToRemove.includes(t.id))
+  }
+
+  transferTilesToFinalRow(params) {
+    const { seatIndex, rowIndex, columnIndex, tileColor } = params
+
+    const tileToTransfer = _.find(this.state.tileList, {
+      targetLocation: `p${seatIndex}s${rowIndex}0`,
+      tileColor,
+    })
+    tileToTransfer.targetLocation = `p${seatIndex}f${rowIndex}${columnIndex}`
+    tileToTransfer.tether.setOptions({
+      element: `#${tileToTransfer.id}`,
+      target: `#${tileToTransfer.targetLocation}`,
+      attachment: 'top left',
+      targetAttachment: 'top left',
+    })
+
+    _.remove(this.state.tileList, t => t.targetLocation.startsWith(`p${seatIndex}s${rowIndex}`))
+  }
+
+  removeBrokenTiles() {
+    _.remove(this.state.tileList, t => t.targetLocation.indexOf('b') !== -1)
   }
 
   pullAndStageTiles(args) {

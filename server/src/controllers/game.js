@@ -3,7 +3,7 @@ import _ from 'lodash'
 
 import AzulHelpers from '@shared/azul/helpers'
 import { shuffle } from '@shared/util'
-import { REQUIRED_ORDER, TILE_TRANSFER, FACTORY_REFILL, TILE_DUMP } from '@shared/azul/game-invariants'
+import { REQUIRED_ORDER, TILE_TRANSFER, FACTORY_REFILL, TILE_DUMP, STARTING_PLAYER } from '@shared/azul/game-invariants'
 
 async function createGame(options) {
   const gameId = (await db('games').insert({
@@ -171,8 +171,9 @@ async function saveAndApplyActions(gameId, gameActions, gameState = null) {
 }
 
 function isRoundOver(gameState) {
-  const { tableTiles, factories } = gameState
-  return tableTiles.length === 0 && factories.every(f => f.length === 0)
+  const factoriesAreEmpty = gameState.factories.every(f => f.length === 0)
+  const noMoreTableTiles = gameState.tableTiles.every(t => t === STARTING_PLAYER)
+  return factoriesAreEmpty && noMoreTableTiles
 }
 
 async function incrementRound(gameId) {
@@ -182,9 +183,17 @@ async function incrementRound(gameId) {
 }
 
 function generateTileDump(gameState) {
+  // It's _technically_ possible for no one to have pulled the starting player tile if all
+  // factories were filled with homogenous tiles. The rules don't even cover this case, but for
+  // the sake of fairness, let's just randomize the starting player in this scenario.
+  const firstSeatNextRound = gameState.firstSeatNextRound || Math.floor(Math.random() * gameState.players.length)
   return {
     type: TILE_DUMP,
+    turnNumber: null,
     roundNumber: gameState.currentRoundNumber,
+    params: {
+      firstSeatNextRound
+    }
   }
 }
 
@@ -244,6 +253,7 @@ function generateTileTransfers(gameState) {
         tileTransfers.push({
           type: TILE_TRANSFER,
           roundNumber: gameState.currentRoundNumber,
+          turnNumber: null,
           params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
         })
       } else {
@@ -260,6 +270,7 @@ function generateTileTransfers(gameState) {
           tileTransfers.push({
             type: TILE_TRANSFER,
             roundNumber: gameState.currentRoundNumber,
+            turnNumber: null,
             params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
           })
         }

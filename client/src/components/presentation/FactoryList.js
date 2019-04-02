@@ -11,7 +11,7 @@ function FactoryList(props) {
           factoryIndex={index}
           tiles={factory}
           isFactorySelected={index === props.selectedFactoryIndex}
-          selectedTileColor={props.selectedTileColor}
+          selectedTiles={props.selectedTiles}
           onTileSelectedInFactory={props.onTileSelectedInFactory}
         />
       )
@@ -31,16 +31,18 @@ function FactoryList(props) {
 
   function renderTableTiles(tableTiles) {
     let maxNumberTableTiles = props.factories.length * 3
-    return tableTiles.concat(Array(maxNumberTableTiles - tableTiles.length).fill(null)).map((tile, index) => (
-      <TileSquare
-        id={`t${index}`}
-        isSelected={props.selectedFactoryIndex === -1 && props.selectedTileColor === tile}
-        key={index}
-        bgColor={null}
-        tileColor={tile}
-        handleClick={() => props.onTileSelectedInFactory(tile, -1)}
-      />
-    ))
+    return tableTiles
+      .concat(Array(maxNumberTableTiles - tableTiles.length).fill(null))
+      .map((tile, index) => (
+        <TileSquare
+          id={`t${index}`}
+          isSelected={props.selectedFactoryIndex === -1 && props.selectedTiles.includes(tile)}
+          key={index}
+          bgColor={null}
+          tileColor={tile}
+          handleClick={() => props.onTileSelectedInFactory(tile, -1)}
+        />
+      ))
   }
 
   return (

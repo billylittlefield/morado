@@ -44,8 +44,14 @@ function PlayerBoard(props) {
   // Add one verification check before propagating action to ensure that the target row can
   // accept the tiles from the factory
   function verifyAndPlaceTilesFromFactory(rowIndex) {
-    if (rowIndex === -1 || (possibleRowPlacements && possibleRowPlacements[rowIndex])) {
-      props.placeTilesFromFactory(rowIndex)
+    if (possibleRowPlacements && possibleRowPlacements[rowIndex]) {
+      props.placeTilesFromFactoryOrTable(rowIndex)
+    }
+  }
+
+  function verifyAndPlaceTilesFromTable(rowIndex) {
+    if (rowIndex === -1 && isActiveAndHasPendingSelection) {
+      props.placeTilesFromFactoryOrTable(rowIndex)
     }
   }
 
@@ -88,7 +94,7 @@ function PlayerBoard(props) {
         rowSize={DROPPED_TILE_PENALTIES.length}
         rowIndex={-1}
         canAcceptPendingTiles={isActiveAndHasPendingSelection}
-        onTileSelected={verifyAndPlaceTilesFromFactory}
+        onTileSelected={verifyAndPlaceTilesFromTable}
       />
     </div>
   )

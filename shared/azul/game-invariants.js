@@ -4,7 +4,7 @@ exports.MIN_PLAYERS = 2
 exports.MAX_PLAYERS = 4
 
 exports.TILE_COLORS = ['black', 'blue', 'red', 'snowflake', 'yellow']
-exports.STARTING_PLAYER_TOKEN = 'STARTING_PLAYER_TOKEN'
+exports.STARTING_PLAYER = 'starting-player'
 exports.NUM_TILES_OF_COLOR = 20
 
 exports.TILES_PER_FACTORY = 4

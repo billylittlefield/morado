@@ -7,7 +7,7 @@ function Factory(props) {
       return (
         <TileSquare
           id={`f${props.factoryIndex}${index}`}
-          isSelected={props.isFactorySelected && props.selectedTileColor === tileColor}
+          isSelected={props.isFactorySelected && props.selectedTiles.includes(tileColor)}
           key={index}
           bgColor={null}
           tileColor={tileColor}

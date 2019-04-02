@@ -7,6 +7,7 @@ import OpponentList from 'components/presentation/OpponentList'
 import FactoryList from 'components/presentation/FactoryList'
 import PlayerBoard from 'components/presentation/PlayerBoard'
 import TilePieces from 'components/presentation/TilePieces'
+import { STARTING_PLAYER } from '@shared/azul/game-invariants'
 
 export default class Azul extends React.Component {
   constructor(props) {
@@ -15,8 +16,6 @@ export default class Azul extends React.Component {
       selectedFactoryIndex: null,
       selectedTiles: [],
     }
-    // this.tileMap = {}
-    // this.initializeTileMap()
   }
 
   initializeTileMap() {
@@ -132,6 +131,9 @@ export default class Azul extends React.Component {
   }
 
   selectTileInFactory(tileColor, factoryIndex) {
+    if (tileColor === STARTING_PLAYER) {
+      return
+    }
     const userPlayer = this.getUserPlayer()
     const isUsersTurn = userPlayer && userPlayer.seatIndex === this.props.activeSeatIndex
     if (!isUsersTurn) {
@@ -151,15 +153,18 @@ export default class Azul extends React.Component {
       // Select tiles in factory / broken tile row
       const { factories, tableTiles } = this.props
       const tileSet = factoryIndex !== -1 ? factories[factoryIndex] : tableTiles
-      const tileCount = tileSet.filter(c => c === tileColor).length
+      const selectedTiles = tileSet.filter(c => c === tileColor)
+      if (factoryIndex === -1 && this.props.firstSeatNextRound === null) {
+        selectedTiles.push(STARTING_PLAYER)
+      }
       this.setState({
         selectedFactoryIndex: factoryIndex,
-        selectedTiles: Array(tileCount).fill(tileColor),
+        selectedTiles,
       })
     }
   }
 
-  placeTilesFromFactory(targetRowIndex) {
+  placeTilesFromFactoryOrTable(targetRowIndex) {
     this.props.pullAndStageTiles({
       factoryIndex: this.state.selectedFactoryIndex,
       tileColor: this.state.selectedTiles[0],
@@ -190,14 +195,14 @@ export default class Azul extends React.Component {
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
-          <TilePieces
-            tileList={this.props.tileList}
-          />
+          <div className="tile-container">
+            {this.props.tileList.map(t => <div key={t.id} className={`tile tile-${t.tileColor}`} id={t.id} />)}
+          </div>
           <div id="tile-container" />
           <div className="left-container">
             <FactoryList
               onTileSelectedInFactory={this.selectTileInFactory.bind(this)}
-              selectedTileColor={this.state.selectedTiles[0] || null}
+              selectedTiles={this.state.selectedTiles}
               selectedFactoryIndex={this.state.selectedFactoryIndex}
               factories={this.props.factories}
               tableTiles={this.props.tableTiles}
@@ -206,7 +211,7 @@ export default class Azul extends React.Component {
               player={userPlayer}
               activeSeatIndex={this.props.activeSeatIndex}
               selectedTiles={this.state.selectedTiles}
-              placeTilesFromFactory={this.placeTilesFromFactory.bind(this)}
+              placeTilesFromFactoryOrTable={this.placeTilesFromFactoryOrTable.bind(this)}
               transferTileToFinalRow={this.transferTileToFinalRow.bind(this)}
               rowsPendingTileTransfer={rowsPendingTileTransfer}
             />
