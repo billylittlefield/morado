@@ -141,15 +141,10 @@ class AzulContainer extends React.Component {
     })
 
     this.setState({ tileList })
-    this.initializeTethers()
   }
 
   resetTethers() {
     this.state.tileList.forEach(tile => tile.destroyTether())
-  }
-
-  initializeTethers() {
-    this.state.tileList.forEach(tile => tile.createTether())
   }
 
   updateTethers(gameAction) {
@@ -182,7 +177,6 @@ class AzulContainer extends React.Component {
     })
 
     this.setState({ tileList: [...this.state.tileList, ...newTiles] })
-    this.initializeTethers()
   }
 
   updateTethersForTilePull(params) {
@@ -213,6 +207,7 @@ class AzulContainer extends React.Component {
     )
 
     tilesToPlayer.forEach(tile => {
+      tile.stopSpinning()
       // if the target row can accept the incoming tile
       if (currentRowCount + numToStagingRow <= targetRowIndex && tile.color !== STARTING_PLAYER) {
         tile.updateLocation(
@@ -233,6 +228,7 @@ class AzulContainer extends React.Component {
     _.sortBy(tileList.filter(t => t.groupName === 'table'), 'tileIndex')
       .concat(tilesToTable)
       .forEach((tile, index) => {
+        tile.stopSpinning()
         tile.updateLocation('common', 'table', 0, index)
       })
 
@@ -259,7 +255,12 @@ class AzulContainer extends React.Component {
   removeBrokenTiles() {
     const tileList = this.state.tileList
     _.find(tileList, { color: STARTING_PLAYER }).updateLocation('common', 'table', 0, 0)
-    this.setState({ tileList: _.reject(tileList, t => t.groupName === 'broken' )})
+    this.setState({ tileList: _.reject(tileList, t => t.groupName === 'broken') })
+  }
+
+  selectTiles(tiles) {
+    this.state.tileList.forEach(t => t.stopSpinning())
+    tiles.forEach(t => t.startSpinning())
   }
 
   pullAndStageTiles(args) {
@@ -317,6 +318,7 @@ class AzulContainer extends React.Component {
         {...this.props.gameState}
         tileList={this.state.tileList}
         userInfo={this.props.userInfo}
+        selectTiles={this.selectTiles.bind(this)}
         pullAndStageTiles={this.pullAndStageTiles.bind(this)}
         transferTiles={this.transferTiles.bind(this)}
       />

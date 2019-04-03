@@ -18,6 +18,8 @@ function toRads(degrees) {
   return degrees * (Math.PI / 180)
 }
 
+const svgNS = 'http://www.w3.org/2000/svg'
+
 export default class Tile {
   /**
    *
@@ -28,7 +30,8 @@ export default class Tile {
    * @param {string} tileIndex - tile index within row / factory
    */
   constructor(color, boardName, groupName, groupIndex, tileIndex) {
-    this.id = getUniqueId()
+    const id = getUniqueId()
+    this.id = id
     this.color = color
     this.boardName = boardName
     this.groupName = groupName
@@ -36,6 +39,43 @@ export default class Tile {
     this.tileIndex = tileIndex
     this.rotationAngle = Math.floor(Math.random() * 360)
     this.tether = null
+    this.parent = null
+    this.isSpinning = false
+    const tileElement = document.createElementNS(svgNS, 'svg')
+    tileElement.setAttribute('id', id)
+    tileElement.setAttribute('class', `tile tile-${color}`)
+    const topFace = document.createElementNS(svgNS, 'path')
+    topFace.setAttribute('d', this.topFacePath)
+    topFace.setAttribute('class', 'top-face')
+    topFace.addEventListener('click', this.handleClick.bind(this))
+    const leftFace = document.createElementNS(svgNS, 'path')
+    leftFace.setAttribute('d', this.leftFacePath)
+    leftFace.setAttribute('class', 'left-face')
+    const rightFace = document.createElementNS(svgNS, 'path')
+    rightFace.setAttribute('d', this.rightFacePath)
+    rightFace.setAttribute('class', 'right-face')
+    ;[topFace, leftFace, rightFace].forEach(face => {
+      face.setAttribute('stroke', '#fff')
+      face.setAttribute('stroke-width', '2px')
+      tileElement.append(face)
+    })
+    this.tileElement = tileElement
+    this.topFace = topFace
+    this.rightFace = rightFace
+    this.leftFace = leftFace
+    document.getElementById('tile-container').append(tileElement)
+    this.createTether()
+  }
+
+  handleClick(event) {
+    if (!this.parent) {
+      return
+    }
+    this.parent.selectTile(this)
+  }
+
+  setParent(parent) {
+    this.parent = parent
   }
 
   get targetLocation() {
@@ -63,20 +103,20 @@ export default class Tile {
     return `M ${topLeft[0]} ${topLeft[1]} L ${topRight[0]} ${topRight[1]} L ${bottomRight[0]} 
       ${bottomRight[1]} L ${bottomLeft[0]} ${bottomLeft[1]} Z`
   }
-  
+
   get leftFacePath() {
     const { topLeft, bottomLeft } = this.calculateCornerPositions()
-    return `M ${topLeft[0]} ${topLeft[1]} l 0 10 L ${bottomLeft[0]} ${(bottomLeft[1] + 10)} 
+    return `M ${topLeft[0]} ${topLeft[1]} l 0 10 L ${bottomLeft[0]} ${bottomLeft[1] + 10} 
       L ${bottomLeft[0]} ${bottomLeft[1]} Z`
   }
   get rightFacePath() {
     const { bottomRight, bottomLeft } = this.calculateCornerPositions()
-    return `M ${bottomLeft[0]} ${bottomLeft[1]} l 0 10 L ${bottomRight[0]} ${(bottomRight[1] + 10)} 
+    return `M ${bottomLeft[0]} ${bottomLeft[1]} l 0 10 L ${bottomRight[0]} ${bottomRight[1] + 10} 
       L ${bottomRight[0]} ${bottomRight[1]} Z`
   }
 
   calculateCornerPositions() {
-    let radius = (42 / Math.sin(toRads(45))) / 2
+    let radius = 42 / Math.sin(toRads(45)) / 2
     let center = [30, 30]
     let rotationAngle = this.rotationAngle
     let dx = radius * Math.cos(toRads(45 + rotationAngle))
@@ -85,26 +125,26 @@ export default class Tile {
     let topRight = [center[0] + dy, center[1] - dx]
     let bottomRight = [center[0] + dx, center[1] + dy]
     let bottomLeft = [center[0] - dy, center[1] + dx]
-    
+
     if (rotationAngle > 0 && rotationAngle < 90) {
-      let temp = topLeft;
-      topLeft = bottomLeft;
-      bottomLeft = bottomRight;
-      bottomRight = topRight;
-      topRight = temp;
+      let temp = topLeft
+      topLeft = bottomLeft
+      bottomLeft = bottomRight
+      bottomRight = topRight
+      topRight = temp
     } else if (rotationAngle >= 90 && rotationAngle < 180) {
-      let temp = topLeft;
-      let temp2 = topRight;
-      topLeft = bottomRight;
-      topRight = bottomLeft;
-      bottomRight = temp;
-      bottomLeft = temp2;
+      let temp = topLeft
+      let temp2 = topRight
+      topLeft = bottomRight
+      topRight = bottomLeft
+      bottomRight = temp
+      bottomLeft = temp2
     } else if (rotationAngle >= 180 && rotationAngle < 270) {
-      let temp = topLeft;
-      topLeft = topRight;
-      topRight = bottomRight;
-      bottomRight = bottomLeft;
-      bottomLeft = temp;
+      let temp = topLeft
+      topLeft = topRight
+      topRight = bottomRight
+      bottomRight = bottomLeft
+      bottomLeft = temp
     }
 
     return { topLeft, topRight, bottomRight, bottomLeft }
@@ -116,8 +156,26 @@ export default class Tile {
       target: `#${this.targetLocation}`,
       attachment: 'top left',
       targetAttachment: 'top left',
-      offset: '18px 8px' 
+      offset: '18px 8px',
     }
+  }
+
+  spinTile(timestamp) {
+    this.rotate()
+    if (this.isSpinning) {
+      requestAnimationFrame(this.spinTile.bind(this))
+    } else {
+      cancelAnimationFrame(timestamp)
+    }
+  }
+
+  startSpinning() {
+    this.isSpinning = true
+    this.spinTile()
+  }
+
+  stopSpinning() {
+    this.isSpinning = false
   }
 
   createTether() {
@@ -141,5 +199,12 @@ export default class Tile {
       (this.groupIndex = groupIndex),
       (this.tileIndex = tileIndex)
     this.tether && this.tether.setOptions(this.tetherOptions)
+  }
+
+  rotate() {
+    this.rotationAngle = (this.rotationAngle + 4) % 360
+    this.topFace.setAttribute('d', this.topFacePath)
+    this.rightFace.setAttribute('d', this.rightFacePath)
+    this.leftFace.setAttribute('d', this.leftFacePath)
   }
 }

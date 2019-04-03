@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants'
+import { STARTING_PLAYER, DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants'
 import Row from 'components/presentation/Row'
 import RowList from 'components/presentation/RowList'
 
@@ -18,7 +18,7 @@ function PlayerBoard(props) {
       return null
     }
 
-    const tileColor = props.selectedTiles[0]
+    const tileColor = _.reject(props.selectedTiles, {color: STARTING_PLAYER})[0].color
     return stagingRows.map((row, rowIndex) => {
       // If the staging row is already full
       if (row.tiles.filter(t => t !== null).length === row.rowSize) {

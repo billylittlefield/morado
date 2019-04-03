@@ -10,10 +10,13 @@ import { STARTING_PLAYER } from '@shared/azul/game-invariants'
 export default class Azul extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {
-      selectedFactoryIndex: null,
-      selectedTiles: [],
-    }
+    this.state = { selectedTiles: [] }
+  }
+
+  componentDidUpdate() {
+    this.props.tileList.forEach(t => {
+      t.setParent(this)
+    })
   }
 
   getUserPlayer() {
@@ -29,61 +32,30 @@ export default class Azul extends React.Component {
     return _.reject(this.props.players, opponent => opponent === userPlayer)
   }
 
-  // selectTileInFactory(tile) {
-  //   if (tile.isStartingPlayer || !tile.isCommunalTile) {
-  //     return
-  //   }
-  //   const userPlayer = this.getUserPlayer()
-  //   const isUsersTurn = userPlayer && userPlayer.seatIndex === this.props.activeSeatIndex
-  //   if (!isUsersTurn) {
-  //     return
-  //   }
-
-  //   if (
-  //     this.state.selectedTiles[0] === tile.color &&
-  //     this.state.selectedFactoryIndex === (tile.groupName === 't' ? -1 : tile.groupIndex)
-  //   ) {
-  //     // Undo selection
-  //     this.setState({
-  //       selectedFactoryIndex: null,
-  //       selectedTiles: [],
-  //     })
-  //   } else {
-  //     // Select tiles in factory / broken tile row
-  //     const { factories, tableTiles } = this.props
-  //     const tileSet = tile.groupName === 'table' ? tableTiles : factories[tile.groupIndex]
-  //     const selectedTiles = tileSet.filter(c => c === tile.color || c === STARTING_PLAYER)
-  //     this.setState({
-  //       selectedFactoryIndex: tile.groupName === 'table' ? -1 : tile.groupIndex,
-  //       selectedTiles,
-  //     })
-
-  //   }
-  // }
-
-  selectTileInFactory(tile) {
-    let selectedTiles = this.props.tileList.filter(t => {
-      return (
-        t.groupName === tile.groupName &&
-        t.groupIndex === tile.groupIndex &&
-        [tile.color, STARTING_PLAYER].includes(t.color)
-      )
-    })
-
+  selectTile(tile) {
+    let selectedTiles = []
+    if (!this.state.selectedTiles.includes(tile)) {
+      selectedTiles = this.props.tileList.filter(t => {
+        return (
+          t.groupName === tile.groupName &&
+          t.groupIndex === tile.groupIndex &&
+          [tile.color, STARTING_PLAYER].includes(t.color)
+        )
+      })
+    }
     this.setState({ selectedTiles })
+    this.props.selectTiles(selectedTiles)
   }
 
   placeTilesFromFactoryOrTable(targetRowIndex) {
+    const factoryIndex = this.state.selectedTiles[0].groupName === 'table' ? -1 : this.state.selectedTiles[0].groupIndex
     this.props.pullAndStageTiles({
-      factoryIndex: this.state.selectedFactoryIndex,
-      tileColor: this.state.selectedTiles[0],
+      factoryIndex,
+      tileColor: _.reject(this.state.selectedTiles, { color: STARTING_PLAYER })[0].color,
       targetRowIndex,
     })
 
-    this.setState({
-      selectedFactoryIndex: null,
-      selectedTiles: [],
-    })
+    this.setState({ selectedTiles: [] })
   }
 
   transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex) {
@@ -98,29 +70,22 @@ export default class Azul extends React.Component {
   renderTiles() {
     const smallTileBoards = this.getOpponents().map(o => `p${o.seatIndex}`)
     return this.props.tileList.map(tile => {
-      let isHighlighted = false
-      if (this.state.selectedFactoryIndex !== null) {
-        if (this.state.selectedFactoryIndex === -1) {
-          isHighlighted =
-            tile.groupName === 'table' && this.state.selectedTiles.includes(tile.color)
-        } else {
-          isHighlighted =
-            tile.groupName === 'factory' &&
-            tile.groupIndex === this.state.selectedFactoryIndex &&
-            this.state.selectedTiles.includes(tile.color)
-        }
-      }
+      const isHighlighted = this.state.selectedTiles.includes(tile)
       const highlightClass = isHighlighted ? ' highlight' : ''
       const sizeClass = smallTileBoards.includes(tile.boardName) ? ' tile-small' : ''
       return (
         <svg
           id={tile.id}
           key={tile.id}
-          onClick={() => this.selectTileInFactory(tile)}
           className={`tile tile-${tile.color}${highlightClass}${sizeClass}`}>
-          <path id="top-face" stroke="#fff" strokeWidth="2px" d={tile.topFacePath} />
-          <path id="left-face" stroke="#fff" strokeWidth="2px" d={tile.leftFacePath} />
-          <path id="right-face" stroke="#fff" strokeWidth="2px" d={tile.rightFacePath} />
+          <path
+            stroke="#fff"
+            strokeWidth="2px"
+            d={tile.topFacePath}
+            onClick={() => this.selectTile(tile)}
+          />
+          <path stroke="#fff" strokeWidth="2px" d={tile.leftFacePath} />
+          <path stroke="#fff" strokeWidth="2px" d={tile.rightFacePath} />
         </svg>
       )
     })
@@ -135,14 +100,9 @@ export default class Azul extends React.Component {
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
-          <div className="tile-container">{this.renderTiles()}</div>
+          <div id="tile-container"></div>
           <div className="left-container">
-            <FactoryList
-              selectedTiles={this.state.selectedTiles}
-              selectedFactoryIndex={this.state.selectedFactoryIndex}
-              factories={this.props.factories}
-              tableTiles={this.props.tableTiles}
-            />
+            <FactoryList factories={this.props.factories} tableTiles={this.props.tableTiles} />
             <PlayerBoard
               player={userPlayer}
               activeSeatIndex={this.props.activeSeatIndex}
