@@ -2,16 +2,15 @@ import React from 'react'
 import TileSquare from 'components/presentation/TileSquare'
 
 function Factory(props) {
-  function renderTilesInFactory(tileColors) {
-    return tileColors.map((tileColor, index) => {
+  function renderTilesInFactory(tiles) {
+    return tiles.map((tileColor, index) => {
       return (
         <TileSquare
-          id={`f${props.factoryIndex}${index}`}
-          isSelected={props.isFactorySelected && props.selectedTiles.includes(tileColor)}
+          id={`common-factory-${props.factoryIndex}-${index}`}
           key={index}
-          bgColor={null}
-          tileColor={tileColor}
-          handleClick={() => props.onTileSelectedInFactory(tileColor, props.factoryIndex)}
+          bgClass={'hidden'}
+          shouldHighlight={false}
+          handleClick={() => {}}
         />
       )
     })

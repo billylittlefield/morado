@@ -74,14 +74,14 @@ function PlayerBoard(props) {
       </div>
       <div className="staging-and-final-rows-container">
         <RowList
-          id={`p${seatIndex}s`}
+          id={`p${seatIndex}-staging`}
           isStaging={true}
           rows={stagingRows}
           possibleRowPlacements={possibleRowPlacements}
-          onTileSelected={verifyAndPlaceTilesFromFactory}
+          onRowSelected={verifyAndPlaceTilesFromFactory}
         />
         <RowList
-          id={`p${seatIndex}f`}
+          id={`p${seatIndex}-final`}
           isStaging={false}
           rows={finalRows}
           rowsPendingTileTransfer={props.rowsPendingTileTransfer}
@@ -89,12 +89,12 @@ function PlayerBoard(props) {
         />
       </div>
       <Row
-        id={`p${seatIndex}b`}
+        id={`p${seatIndex}-broken-0`}
         tiles={brokenTiles}
         rowSize={DROPPED_TILE_PENALTIES.length}
         rowIndex={-1}
-        canAcceptPendingTiles={isActiveAndHasPendingSelection}
-        onTileSelected={verifyAndPlaceTilesFromTable}
+        shouldHighlight={isActiveAndHasPendingSelection}
+        onRowSelected={verifyAndPlaceTilesFromTable}
       />
     </div>
   )

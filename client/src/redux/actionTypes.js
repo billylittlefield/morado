@@ -2,7 +2,6 @@ export const LOGIN = 'LOGIN'
 export const LOGOUT = 'LOGOUT'
 
 export const NEW_GAME_CREATED = 'NEW_GAME_CREATED' 
-export const FACTORY_REFILL = 'FACTORY_REFILL'
 export const TILE_TRANSFER = 'TILE_TRANSFER'
 export const TILE_PULL = 'TILE_PULL'
 export const GAME_STATE_RECEIVED = 'GAME_STATE_RECEIVED'

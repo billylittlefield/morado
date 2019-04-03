@@ -1,14 +1,15 @@
 import React from 'react'
 
 function TileSquare(props) {
-  const { tileColor, bgColor, isSelected, handleClick, canAcceptTileTransfer, id } = props
-  const tileClass = tileColor ? ` tile-${tileColor}` : ''
-  const bgClass = bgColor ? ` bg-${bgColor}` : ''
-  const selectedClass = isSelected ? ` selected` : ''
-  const possibleTileTransferClass = canAcceptTileTransfer ? ` pending-tile-transfer` : ''
-  const classList = `square${tileClass}${bgClass}${selectedClass}${possibleTileTransferClass}`
+  const { bgClass, shouldHighlight, handleClick, id } = props
 
-  return <div id={id} className={classList} onClick={handleClick} />
+  return (
+    <div
+      id={id}
+      className={`square ${bgClass} ${shouldHighlight ? 'highlight' : ''}`}
+      onClick={handleClick}
+    />
+  )
 }
 
 export default TileSquare

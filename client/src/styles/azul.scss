@@ -1,9 +1,52 @@
 .tile {
-  height: 20px;
-  width: 20px;
   position: absolute;
-  background-color: fuchsia;
-  transition: transform 1s; 
+  z-index: 100;
+  transition: transform 1s, width 1s, height 1s; 
+
+  &.tile-small {
+    width: 10px;
+    height: 10px;
+  }
+
+  &.highlight {
+    box-shadow: magenta 0px 0px 20px;
+  }
+
+  &.tile-starting-player {
+    path {
+      fill: grey;
+    }
+  }
+
+  &.tile-snowflake {
+    path {
+      fill: aqua;
+    }
+  }
+
+  &.tile-red {
+    path {
+      fill: red;
+    }
+  }
+
+  &.tile-blue {
+    path {
+      fill: darkblue;
+    }
+  }
+
+  &.tile-black {
+    path {
+      fill: black;
+    }
+  }
+
+  &.tile-yellow {
+    path {
+      fill: gold;
+    }
+  }
 }
 
 // ==============================
@@ -99,7 +142,7 @@ section.azul {
   display: flex;
   justify-content: flex-end;
 
-  &.active {
+  &.highlight {
     box-shadow: magenta 0px 0px 20px;
   }
 }
@@ -108,7 +151,7 @@ section.azul {
   border: 2px solid black;
   height: 40px;
   width: 40px;
-  margin: 4px;
+  margin: 12px;
 
   &.pending-tile-transfer {
     box-shadow: magenta 0px 0px 20px;

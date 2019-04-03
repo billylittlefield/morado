@@ -9,21 +9,22 @@ function RowList(props) {
     return rows.map((row, rowIndex) => {
         return (
         <Row
-          id={`${props.id}${rowIndex}`}
+          id={`${props.id}-${rowIndex}`}
           key={rowIndex}
           rowIndex={rowIndex}
           onTileSelected={props.onTileSelected}
-          canAcceptPendingTiles={possibleRowPlacements[rowIndex]}
+          onRowSelected={props.onRowSelected}
+          shouldHighlight={possibleRowPlacements[rowIndex]}
           possibleTileTransfers={rowsPendingTileTransfer[rowIndex]}
-          {...row}
+          tiles={row.tiles}
+          requiredOrder={row.requiredOrder}
         />
       )
     })
   }
 
-  const classList = `${props.isStaging ? 'staging' : 'final'}-rows`
   return (
-    <div className={classList}>
+    <div className={`${props.isStaging ? 'staging' : 'final'}-rows`}>
       <div className="row-container">{renderRowList(props.rows)}</div>
     </div>
   )

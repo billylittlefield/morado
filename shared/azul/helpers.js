@@ -233,10 +233,11 @@ function applyTileDump(state, action) {
   const { firstSeatNextRound } = action.params
   return produce(state, draft => {
     draft.players.forEach(player => {
-      player.brokenTiles.forEach((brokenTile, index) => {
+      let brokenTiles = player.brokenTiles.filter(t => t !== null)
+      brokenTiles.forEach((brokenTile, index) => {
         player.score += DROPPED_TILE_PENALTIES[index]
       })
-      draft.discardTiles = draft.discardTiles.concat(player.brokenTiles)
+      draft.discardTiles = draft.discardTiles.concat(brokenTiles.filter(t => t !== STARTING_PLAYER))
       player.brokenTiles = Array(DROPPED_TILE_PENALTIES.length).fill(null)
     })
 

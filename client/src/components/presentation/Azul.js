@@ -1,12 +1,10 @@
 import React from 'react'
 import _ from 'lodash'
 import { Link } from 'react-router-dom'
-import Tether from 'tether'
 
 import OpponentList from 'components/presentation/OpponentList'
 import FactoryList from 'components/presentation/FactoryList'
 import PlayerBoard from 'components/presentation/PlayerBoard'
-import TilePieces from 'components/presentation/TilePieces'
 import { STARTING_PLAYER } from '@shared/azul/game-invariants'
 
 export default class Azul extends React.Component {
@@ -16,105 +14,6 @@ export default class Azul extends React.Component {
       selectedFactoryIndex: null,
       selectedTiles: [],
     }
-  }
-
-  initializeTileMap() {
-    let tileList = []
-    this.props.factories.forEach((factory, factoryIndex) => {
-      factory.forEach((tileColor, positionIndex) => {
-        tileList.push({
-          id: this.getUniqueId(),
-          targetLocation: `f${factoryIndex}${positionIndex}`,
-          tileColor,
-        })
-      })
-    })
-    this.props.players.forEach((player, seatIndex) => {
-      player.stagingRows.forEach((stagingRow, rowIndex) => {
-        stagingRow.tiles.forEach((tileColor, positionIndex) => {
-          if (tileColor === null) {
-            return
-          }
-          tileList.push({
-            id: this.getUniqueId(),
-            targetLocation: `p${seatIndex}s${rowIndex}${positionIndex}`,
-            tileColor,
-          })
-        })
-      })
-      player.finalRows.forEach((finalRow, rowIndex) => {
-        finalRow.tiles.forEach((tileColor, positionIndex) => {
-          if (tileColor === null) {
-            return
-          }
-          tileList.push({
-            id: this.getUniqueId(),
-            targetLocation: `p${seatIndex}f${rowIndex}${positionIndex}`,
-            tileColor,
-          })
-        })
-      })
-      player.brokenTiles.forEach((tileColor, positionIndex) => {
-        if (tileColor === null) {
-          return
-        }
-        tileList.push({
-          id: this.getUniqueId(),
-          targetLocation: `p${seatIndex}b${positionIndex}`,
-          tileColor,
-        })
-      })
-    })
-
-    tileList.forEach(t => (this.tileMap[t.id] = { ...t }))
-  }
-
-  // componentDidUpdate() {
-  //   this.updateTethers()
-  // }
-
-  updateTethers() {
-    const tileMap = this.tileMap
-
-    visibleTiles.forEach(tile => {
-      // update existing tethers
-      let tileMapRecord = tileMap[tile.id]
-      if (tileMapRecord) {
-        tileMapRecord.tether.setOptions({
-          ...tether.options,
-          target: `#${tile.targetLocation}`,
-        })
-      } else {
-        // create new tethers
-        tileMap[tile.id] = {
-          tether: new Tether({
-            element: `#${tile.id}`,
-            target: `#${tile.targetLocation}`,
-            attachment: 'top left',
-            targetAttachment: 'top left',
-          }),
-        }
-      }
-    })
-
-    // remove old tethers
-    _.difference(Object.keys(tileMap), _.map(visibleTiles, 'id')).forEach(keyToRemove => {
-      tileMap[keyToRemove].tether.destroy()
-      delete tileMap[keyToRemove]
-    })
-  }
-
-  getUniqueId() {
-    return (
-      '_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9) +
-      '_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9)
-    )
   }
 
   getUserPlayer() {
@@ -130,38 +29,48 @@ export default class Azul extends React.Component {
     return _.reject(this.props.players, opponent => opponent === userPlayer)
   }
 
-  selectTileInFactory(tileColor, factoryIndex) {
-    if (tileColor === STARTING_PLAYER) {
-      return
-    }
-    const userPlayer = this.getUserPlayer()
-    const isUsersTurn = userPlayer && userPlayer.seatIndex === this.props.activeSeatIndex
-    if (!isUsersTurn) {
-      return
-    }
+  // selectTileInFactory(tile) {
+  //   if (tile.isStartingPlayer || !tile.isCommunalTile) {
+  //     return
+  //   }
+  //   const userPlayer = this.getUserPlayer()
+  //   const isUsersTurn = userPlayer && userPlayer.seatIndex === this.props.activeSeatIndex
+  //   if (!isUsersTurn) {
+  //     return
+  //   }
 
-    if (
-      this.state.selectedTiles[0] === tileColor &&
-      this.state.selectedFactoryIndex === factoryIndex
-    ) {
-      // Undo selection
-      this.setState({
-        selectedFactoryIndex: null,
-        selectedTiles: [],
-      })
-    } else {
-      // Select tiles in factory / broken tile row
-      const { factories, tableTiles } = this.props
-      const tileSet = factoryIndex !== -1 ? factories[factoryIndex] : tableTiles
-      const selectedTiles = tileSet.filter(c => c === tileColor)
-      if (factoryIndex === -1 && this.props.firstSeatNextRound === null) {
-        selectedTiles.push(STARTING_PLAYER)
-      }
-      this.setState({
-        selectedFactoryIndex: factoryIndex,
-        selectedTiles,
-      })
-    }
+  //   if (
+  //     this.state.selectedTiles[0] === tile.color &&
+  //     this.state.selectedFactoryIndex === (tile.groupName === 't' ? -1 : tile.groupIndex)
+  //   ) {
+  //     // Undo selection
+  //     this.setState({
+  //       selectedFactoryIndex: null,
+  //       selectedTiles: [],
+  //     })
+  //   } else {
+  //     // Select tiles in factory / broken tile row
+  //     const { factories, tableTiles } = this.props
+  //     const tileSet = tile.groupName === 'table' ? tableTiles : factories[tile.groupIndex]
+  //     const selectedTiles = tileSet.filter(c => c === tile.color || c === STARTING_PLAYER)
+  //     this.setState({
+  //       selectedFactoryIndex: tile.groupName === 'table' ? -1 : tile.groupIndex,
+  //       selectedTiles,
+  //     })
+
+  //   }
+  // }
+
+  selectTileInFactory(tile) {
+    let selectedTiles = this.props.tileList.filter(t => {
+      return (
+        t.groupName === tile.groupName &&
+        t.groupIndex === tile.groupIndex &&
+        [tile.color, STARTING_PLAYER].includes(t.color)
+      )
+    })
+
+    this.setState({ selectedTiles })
   }
 
   placeTilesFromFactoryOrTable(targetRowIndex) {
@@ -186,6 +95,37 @@ export default class Azul extends React.Component {
     })
   }
 
+  renderTiles() {
+    const smallTileBoards = this.getOpponents().map(o => `p${o.seatIndex}`)
+    return this.props.tileList.map(tile => {
+      let isHighlighted = false
+      if (this.state.selectedFactoryIndex !== null) {
+        if (this.state.selectedFactoryIndex === -1) {
+          isHighlighted =
+            tile.groupName === 'table' && this.state.selectedTiles.includes(tile.color)
+        } else {
+          isHighlighted =
+            tile.groupName === 'factory' &&
+            tile.groupIndex === this.state.selectedFactoryIndex &&
+            this.state.selectedTiles.includes(tile.color)
+        }
+      }
+      const highlightClass = isHighlighted ? ' highlight' : ''
+      const sizeClass = smallTileBoards.includes(tile.boardName) ? ' tile-small' : ''
+      return (
+        <svg
+          id={tile.id}
+          key={tile.id}
+          onClick={() => this.selectTileInFactory(tile)}
+          className={`tile tile-${tile.color}${highlightClass}${sizeClass}`}>
+          <path id="top-face" stroke="#fff" strokeWidth="2px" d={tile.topFacePath} />
+          <path id="left-face" stroke="#fff" strokeWidth="2px" d={tile.leftFacePath} />
+          <path id="right-face" stroke="#fff" strokeWidth="2px" d={tile.rightFacePath} />
+        </svg>
+      )
+    })
+  }
+
   render() {
     const userPlayer = this.getUserPlayer()
     const opponents = this.getOpponents()
@@ -195,13 +135,9 @@ export default class Azul extends React.Component {
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
-          <div className="tile-container">
-            {this.props.tileList.map(t => <div key={t.id} className={`tile tile-${t.tileColor}`} id={t.id} />)}
-          </div>
-          <div id="tile-container" />
+          <div className="tile-container">{this.renderTiles()}</div>
           <div className="left-container">
             <FactoryList
-              onTileSelectedInFactory={this.selectTileInFactory.bind(this)}
               selectedTiles={this.state.selectedTiles}
               selectedFactoryIndex={this.state.selectedFactoryIndex}
               factories={this.props.factories}

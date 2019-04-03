@@ -3,8 +3,8 @@ import axios from 'axios'
 import io from 'socket.io-client'
 import { connect } from 'react-redux'
 import _ from 'lodash'
-import Tether from 'tether'
 
+import Tile from 'models/Tile'
 import {
   connectedToGame,
   receiveGameState,
@@ -25,6 +25,7 @@ import Azul from 'components/presentation/Azul'
 class AzulContainer extends React.Component {
   state = {
     tileList: [],
+    isLoggedIn: false,
   }
 
   componentDidMount() {
@@ -32,6 +33,7 @@ class AzulContainer extends React.Component {
 
     // Load game state
     axios.get(`/games/azul/${gameId}`).then(res => {
+      this.setState({ isLoggedIn: this.props.userInfo.isLoggedIn })
       this.props.receiveGameState({ ...res.data })
       this.setInitialTiles({ ...res.data.gameState })
 
@@ -75,6 +77,14 @@ class AzulContainer extends React.Component {
     this.props.socket.emit('leaveGame', this.props.gameId)
   }
 
+  componentDidUpdate() {
+    if (this.props.gameState && this.props.userInfo.isLoggedIn !== this.state.isLoggedIn) {
+      this.resetTethers()
+      this.setInitialTiles({ ...this.props.gameState })
+      this.setState({ ...this.state, isLoggedIn: !this.state.isLoggedIn })
+    }
+  }
+
   validateGameState(gameState) {
     if (!_.isEqual(gameState, this.props.gameState)) {
       function difference(object, base) {
@@ -88,41 +98,22 @@ class AzulContainer extends React.Component {
         }
         return changes(object, base)
       }
-      debugger
       console.log('houston we have a mismatch')
       console.log(difference(gameState, this.props.gameState))
       this.props.receiveGameState({ gameState })
+      this.setInitialTiles({ ...res.data.gameState })
     }
   }
-  getUniqueId() {
-    return (
-      '_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9) +
-      '_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9)
-    )
-  }
+
   setInitialTiles(gameState) {
     let tileList = []
     gameState.factories.forEach((factory, factoryIndex) => {
       factory.forEach((tileColor, positionIndex) => {
-        tileList.push({
-          id: this.getUniqueId(),
-          targetLocation: `f${factoryIndex}${positionIndex}`,
-          tileColor,
-        })
+        tileList.push(new Tile(tileColor, 'common', 'factory', factoryIndex, positionIndex))
       })
     })
     gameState.tableTiles.forEach((tileColor, positionIndex) => {
-      tileList.push({
-        id: this.getUniqueId(),
-        targetLocation: `t${positionIndex}`,
-        tileColor,
-      })
+      tileList.push(new Tile(tileColor, 'common', 'table', 0, positionIndex))
     })
     gameState.players.forEach((player, seatIndex) => {
       player.stagingRows.forEach((stagingRow, rowIndex) => {
@@ -130,11 +121,7 @@ class AzulContainer extends React.Component {
           if (tileColor === null) {
             return
           }
-          tileList.push({
-            id: this.getUniqueId(),
-            targetLocation: `p${seatIndex}s${rowIndex}${positionIndex}`,
-            tileColor,
-          })
+          tileList.push(new Tile(tileColor, `p${seatIndex}`, 'staging', rowIndex, positionIndex))
         })
       })
       player.finalRows.forEach((finalRow, rowIndex) => {
@@ -142,22 +129,14 @@ class AzulContainer extends React.Component {
           if (tileColor === null) {
             return
           }
-          tileList.push({
-            id: this.getUniqueId(),
-            targetLocation: `p${seatIndex}f${rowIndex}${positionIndex}`,
-            tileColor,
-          })
+          tileList.push(new Tile(tileColor, `p${seatIndex}`, 'final', rowIndex, positionIndex))
         })
       })
       player.brokenTiles.forEach((tileColor, positionIndex) => {
         if (tileColor === null) {
           return
         }
-        tileList.push({
-          id: this.getUniqueId(),
-          targetLocation: `p${seatIndex}b${positionIndex}`,
-          tileColor,
-        })
+        tileList.push(new Tile(tileColor, `p${seatIndex}`, 'broken', 0, positionIndex))
       })
     })
 
@@ -165,20 +144,12 @@ class AzulContainer extends React.Component {
     this.initializeTethers()
   }
 
-  initializeTethers() {
-    let tileList = this.state.tileList.map(tile => ({
-      ...tile,
-      tether:
-        tile.tether ||
-        new Tether({
-          element: `#${tile.id}`,
-          target: `#${tile.targetLocation}`,
-          attachment: 'top left',
-          targetAttachment: 'top left',
-        }),
-    }))
+  resetTethers() {
+    this.state.tileList.forEach(tile => tile.destroyTether())
+  }
 
-    this.setState({ tileList })
+  initializeTethers() {
+    this.state.tileList.forEach(tile => tile.createTether())
   }
 
   updateTethers(gameAction) {
@@ -207,11 +178,7 @@ class AzulContainer extends React.Component {
         return
       }
       const tileColor = TILE_COLORS[parseInt(tileIndex)]
-      newTiles.push({
-        id: this.getUniqueId(),
-        targetLocation: `f${factoryIndex}${positionIndex}`,
-        tileColor,
-      })
+      newTiles.push(new Tile(tileColor, 'common', 'factory', factoryIndex, positionIndex))
     })
 
     this.setState({ tileList: [...this.state.tileList, ...newTiles] })
@@ -221,88 +188,78 @@ class AzulContainer extends React.Component {
   updateTethersForTilePull(params) {
     const { seatIndex, factoryIndex, tileColor, targetRowIndex } = params
     const tileList = this.state.tileList
-    const brokenTiles = tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}b`))
+    const brokenTiles = tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}-broken`))
     const targetRowTiles =
       targetRowIndex === -1
         ? brokenTiles
-        : tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}s${targetRowIndex}`))
+        : tileList.filter(t =>
+            t.targetLocation.startsWith(`p${seatIndex}-staging-${targetRowIndex}`)
+          )
     const currentRowCount = targetRowTiles.length
     const currentBrokenTileCount = brokenTiles.length
     let numToBrokenTiles = 0
+    let numToStagingRow = 0
     let tileIdsToRemove = []
 
     const [tilesToPlayer, tilesToTable] = _.partition(
-      this.state.tileList.filter(tile => {
+      tileList.filter(tile => {
         if (factoryIndex === -1) {
-          return (
-            tile.targetLocation.startsWith('t') &&
-            (tile.tileColor === tileColor || tile.tileColor === STARTING_PLAYER)
-          )
+          return tile.groupName === 'table' && (tile.color === tileColor || tile.isStartingPlayer)
         } else {
-          return tile.targetLocation.startsWith(`f${factoryIndex}`)
+          return tile.groupName === 'factory' && tile.groupIndex === factoryIndex
         }
       }),
-      tile => tile.tileColor === tileColor || tile.tileColor === STARTING_PLAYER
+      tile => tile.color === tileColor || tile.isStartingPlayer
     )
 
-    tilesToPlayer.forEach((tile, index) => {
-      if (currentRowCount + index <= targetRowIndex && tile !== STARTING_PLAYER) {
-        tile.targetLocation = `p${seatIndex}s${targetRowIndex}${currentRowCount + index}`
-        tile.tether.setOptions({
-          element: `#${tile.id}`,
-          target: `#${tile.targetLocation}`,
-          attachment: 'top left',
-          targetAttachment: 'top left',
-        })
-      } else if (currentBrokenTileCount + numToBrokenTiles <= DROPPED_TILE_PENALTIES.length) {
-        tile.targetLocation = `p${seatIndex}b${currentBrokenTileCount + numToBrokenTiles}`
-        tile.tether.setOptions({
-          element: `#${tile.id}`,
-          target: `#${tile.targetLocation}`,
-          attachment: 'top left',
-          targetAttachment: 'top left',
-        })
+    tilesToPlayer.forEach(tile => {
+      // if the target row can accept the incoming tile
+      if (currentRowCount + numToStagingRow <= targetRowIndex && tile.color !== STARTING_PLAYER) {
+        tile.updateLocation(
+          `p${seatIndex}`,
+          'staging',
+          targetRowIndex,
+          currentRowCount + numToStagingRow
+        )
+        numToStagingRow++
+      } else if (currentBrokenTileCount + numToBrokenTiles < DROPPED_TILE_PENALTIES.length) {
+        tile.updateLocation(`p${seatIndex}`, 'broken', 0, currentBrokenTileCount + numToBrokenTiles)
         numToBrokenTiles++
       } else {
         tileIdsToRemove.push(tile.id)
       }
     })
 
-    tilesToTable
-      .concat(this.state.tileList.filter(t => t.targetLocation.startsWith('t')))
+    _.sortBy(tileList.filter(t => t.groupName === 'table'), 'tileIndex')
+      .concat(tilesToTable)
       .forEach((tile, index) => {
-        tile.targetLocation = `t${index}`
-        tile.tether.setOptions({
-          element: `#${tile.id}`,
-          target: `#${tile.targetLocation}`,
-          attachment: 'top left',
-          targetAttachment: 'top left',
-        })
+        tile.updateLocation('common', 'table', 0, index)
       })
 
-    _.remove(this.state.tileList, t => tileIdsToRemove.includes(t.id))
+    this.setState({ tileList: _.reject(tileList, t => tileIdsToRemove.includes(t.id)) })
   }
 
   transferTilesToFinalRow(params) {
     const { seatIndex, rowIndex, columnIndex, tileColor } = params
+    const tileList = this.state.tileList
 
-    const tileToTransfer = _.find(this.state.tileList, {
-      targetLocation: `p${seatIndex}s${rowIndex}0`,
-      tileColor,
+    const tileToTransfer = _.find(tileList, {
+      targetLocation: `p${seatIndex}-staging-${rowIndex}-0`,
+      color: tileColor,
     })
-    tileToTransfer.targetLocation = `p${seatIndex}f${rowIndex}${columnIndex}`
-    tileToTransfer.tether.setOptions({
-      element: `#${tileToTransfer.id}`,
-      target: `#${tileToTransfer.targetLocation}`,
-      attachment: 'top left',
-      targetAttachment: 'top left',
-    })
+    tileToTransfer.updateLocation(`p${seatIndex}`, 'final', rowIndex, columnIndex)
 
-    _.remove(this.state.tileList, t => t.targetLocation.startsWith(`p${seatIndex}s${rowIndex}`))
+    this.setState({
+      tileList: _.reject(tileList, t =>
+        t.targetLocation.startsWith(`p${seatIndex}-staging-${rowIndex}`)
+      ),
+    })
   }
 
   removeBrokenTiles() {
-    _.remove(this.state.tileList, t => t.targetLocation.indexOf('b') !== -1)
+    const tileList = this.state.tileList
+    _.find(tileList, { color: STARTING_PLAYER }).updateLocation('common', 'table', 0, 0)
+    this.setState({ tileList: _.reject(tileList, t => t.groupName === 'broken' )})
   }
 
   pullAndStageTiles(args) {
@@ -325,7 +282,7 @@ class AzulContainer extends React.Component {
     // Update server state:
     this.props.socket.emit('pullAndStageTiles', gameAction)
     // Update tile positions:
-    this.updateTethersForTilePull(gameAction.params)
+    this.updateTethers(gameAction)
   }
 
   transferTiles(args) {
@@ -347,6 +304,8 @@ class AzulContainer extends React.Component {
     this.props.transferTiles(gameAction)
     // Update server state:
     this.props.socket.emit('transferTiles', gameAction)
+    // Update tile positions:
+    this.updateTethers(gameAction)
   }
 
   render() {

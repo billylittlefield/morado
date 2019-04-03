@@ -4,40 +4,40 @@ import TileSquare from 'components/presentation/TileSquare'
 function Row(props) {
   const {
     rowIndex,
-    canAcceptPendingTiles,
+    shouldHighlight,
     possibleTileTransfers,
     tiles,
     requiredOrder,
-    onTileSelected
+    onTileSelected,
+    onRowSelected
   } = props
 
   function renderSquares() {
     return tiles.map((tileColor, columnIndex) => {
-      const bgColor = requiredOrder ? requiredOrder[columnIndex] : null
+      const bgClass = requiredOrder ? requiredOrder[columnIndex] : ''
       const canAcceptTileTransfer =
         possibleTileTransfers && possibleTileTransfers.includes(columnIndex)
       return (
         <TileSquare
-          id={`${props.id}${columnIndex}`}
+          id={`${props.id}-${columnIndex}`}
           key={columnIndex}
-          tileColor={tileColor}
-          bgColor={bgColor}
-          canAcceptTileTransfer={canAcceptTileTransfer}
-          handleClick={() => onTileSelected(rowIndex, columnIndex)}
+          bgClass={bgClass}
+          shouldHighlight={canAcceptTileTransfer}
+          handleClick={() => onTileSelected && onTileSelected(rowIndex, columnIndex)}
         />
       )
     })
   }
 
   let classList = 'row'
-  if (canAcceptPendingTiles) {
-    classList += ' active'
+  if (shouldHighlight) {
+    classList += ' highlight'
   }
   if (rowIndex === -1) {
     classList += ' broken-tiles'
   }
   return (
-    <div className={classList}>
+    <div onClick={() => onRowSelected && onRowSelected(rowIndex)} className={classList}>
       {renderSquares()}
     </div>
   )
