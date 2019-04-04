@@ -37,7 +37,7 @@ function Row(props) {
     classList += ' broken-tiles'
   }
   return (
-    <div onClick={() => onRowSelected && onRowSelected(rowIndex)} className={classList}>
+    <div onClick={() => onRowSelected && onRowSelected(rowIndex) } className={classList}>
       {renderSquares()}
     </div>
   )

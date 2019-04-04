@@ -3,7 +3,7 @@ import TileSquare from 'components/presentation/TileSquare'
 
 function Factory(props) {
   function renderTilesInFactory(tiles) {
-    return tiles.map((tileColor, index) => {
+    const elements = tiles.map((tileColor, index) => {
       return (
         <TileSquare
           id={`common-factory-${props.factoryIndex}-${index}`}
@@ -14,6 +14,17 @@ function Factory(props) {
         />
       )
     })
+
+    return (
+      <>
+        <div className="factory-tile-row">
+          {elements.slice(0, 2)}
+        </div>
+        <div className="factory-tile-row">
+          {elements.slice(2)}
+        </div>
+      </>
+    )
   }
 
   return <div className="factory">{renderTilesInFactory(props.tiles)}</div>

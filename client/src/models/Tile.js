@@ -19,6 +19,8 @@ function toRads(degrees) {
 }
 
 const svgNS = 'http://www.w3.org/2000/svg'
+const largeTileLength = 42
+const smallTileLength = 22
 
 export default class Tile {
   /**
@@ -29,18 +31,29 @@ export default class Tile {
    * @param {string} groupIndex - factory index or row index, otherwise 0
    * @param {string} tileIndex - tile index within row / factory
    */
-  constructor(color, boardName, groupName, groupIndex, tileIndex) {
+  constructor(parent, color, boardName, groupName, groupIndex, tileIndex, isSmallTile) {
     const id = getUniqueId()
     this.id = id
+    this.parent = parent
     this.color = color
     this.boardName = boardName
     this.groupName = groupName
     this.groupIndex = groupIndex
     this.tileIndex = tileIndex
-    this.rotationAngle = Math.floor(Math.random() * 360)
+    this.isSmallTile = isSmallTile || false
+    this.rotationAngle = boardName === 'common' ? Math.floor((Math.random() * 360)) : 0
     this.tether = null
-    this.parent = null
-    this.isSpinning = false
+    this.isSelected = false
+    this.reqId = null
+    const { tileElement, topFace, rightFace, leftFace } = this.createElements(id, color)
+    this.tileElement = tileElement
+    this.topFace = topFace
+    this.rightFace = rightFace
+    this.leftFace = leftFace
+    this.createTether()
+  }
+
+  createElements(id, color) {
     const tileElement = document.createElementNS(svgNS, 'svg')
     tileElement.setAttribute('id', id)
     tileElement.setAttribute('class', `tile tile-${color}`)
@@ -48,6 +61,8 @@ export default class Tile {
     topFace.setAttribute('d', this.topFacePath)
     topFace.setAttribute('class', 'top-face')
     topFace.addEventListener('click', this.handleClick.bind(this))
+    // topFace.addEventListener('mouseenter', this.startSpinning.bind(this))
+    // topFace.addEventListener('mouseleave', this.stopSpinning.bind(this))
     const leftFace = document.createElementNS(svgNS, 'path')
     leftFace.setAttribute('d', this.leftFacePath)
     leftFace.setAttribute('class', 'left-face')
@@ -56,15 +71,26 @@ export default class Tile {
     rightFace.setAttribute('class', 'right-face')
     ;[topFace, leftFace, rightFace].forEach(face => {
       face.setAttribute('stroke', '#fff')
-      face.setAttribute('stroke-width', '2px')
+      if (this.isSmallTile) { 
+        face.setAttribute('stroke-width', '1px')
+      } else {
+        face.setAttribute('stroke-width', '2px')
+      }
+      face.setAttribute('stroke-linecap', 'round')
       tileElement.append(face)
     })
-    this.tileElement = tileElement
-    this.topFace = topFace
-    this.rightFace = rightFace
-    this.leftFace = leftFace
     document.getElementById('tile-container').append(tileElement)
-    this.createTether()
+    return { tileElement, topFace, leftFace, rightFace }
+  }
+  
+  createTether() {
+    if (this.tether) {
+      return
+    }
+    this.tether = new Tether(this.tetherOptions)
+    setTimeout(() => {
+      this.tileElement.style.transition = 'transform 1s, width 1s, height 1s'
+    })
   }
 
   handleClick(event) {
@@ -105,18 +131,22 @@ export default class Tile {
   }
 
   get leftFacePath() {
+    const height = this.isSmallTile ? 5 : 10
     const { topLeft, bottomLeft } = this.calculateCornerPositions()
-    return `M ${topLeft[0]} ${topLeft[1]} l 0 10 L ${bottomLeft[0]} ${bottomLeft[1] + 10} 
+    return `M ${topLeft[0]} ${topLeft[1]} l 0 ${height} L ${bottomLeft[0]} ${bottomLeft[1] + height} 
       L ${bottomLeft[0]} ${bottomLeft[1]} Z`
   }
   get rightFacePath() {
+    if (this.isSmallTile) { return '' }
+    const height = this.isSmallTile ? 5 : 10
     const { bottomRight, bottomLeft } = this.calculateCornerPositions()
-    return `M ${bottomLeft[0]} ${bottomLeft[1]} l 0 10 L ${bottomRight[0]} ${bottomRight[1] + 10} 
-      L ${bottomRight[0]} ${bottomRight[1]} Z`
+    return `M ${bottomLeft[0]} ${bottomLeft[1]} l 0 ${height} L ${bottomRight[0]}
+      ${bottomRight[1] + height} L ${bottomRight[0]} ${bottomRight[1]} Z`
   }
 
   calculateCornerPositions() {
-    let radius = 42 / Math.sin(toRads(45)) / 2
+    const sideLength = this.isSmallTile ? smallTileLength : largeTileLength
+    let radius = sideLength / Math.sin(toRads(45)) / 2
     let center = [30, 30]
     let rotationAngle = this.rotationAngle
     let dx = radius * Math.cos(toRads(45 + rotationAngle))
@@ -126,7 +156,7 @@ export default class Tile {
     let bottomRight = [center[0] + dx, center[1] + dy]
     let bottomLeft = [center[0] - dy, center[1] + dx]
 
-    if (rotationAngle > 0 && rotationAngle < 90) {
+    if (rotationAngle < 90) {
       let temp = topLeft
       topLeft = bottomLeft
       bottomLeft = bottomRight
@@ -151,60 +181,89 @@ export default class Tile {
   }
 
   generateTetherOptions() {
+    const offset = this.isSmallTile ? '24px 18px' : '18px 8px'
     return {
       element: `#${this.id}`,
       target: `#${this.targetLocation}`,
       attachment: 'top left',
       targetAttachment: 'top left',
-      offset: '18px 8px',
+      offset
     }
   }
 
-  spinTile(timestamp) {
-    this.rotate()
-    if (this.isSpinning) {
-      requestAnimationFrame(this.spinTile.bind(this))
-    } else {
-      cancelAnimationFrame(timestamp)
-    }
+  select() {
+    this.isSelected = true
+    this.startSpinning()
+  }
+
+  unselect() {
+    this.isSelected = false
+    this.stopSpinning()
   }
 
   startSpinning() {
-    this.isSpinning = true
+    if (this.boardName !== 'common' || this.reqId) { return }
+    this.isSelected = true
     this.spinTile()
   }
 
   stopSpinning() {
-    this.isSpinning = false
+    if (this.isSelected) { return }
+    this.isSelected = false
   }
 
-  createTether() {
+  spinTile() {
+    this.rotate()
+    if (this.isSelected) {
+      this.reqId = requestAnimationFrame(this.spinTile.bind(this))
+    } else {
+      cancelAnimationFrame(this.reqId)
+      this.reqId = null
+    }
+  }
+
+  destroy() {
+    this.boardName = null
+    this.groupName = null
+    this.groupIndex = null
+    this.tileIndex = null
     if (this.tether) {
-      return
+      this.tether.destroy()
     }
-    this.tether = new Tether(this.tetherOptions)
+    if (this.tileElement) {
+      this.tileElement.remove()
+    }
   }
 
-  destroyTether() {
-    if (!this.tether) {
-      return
-    }
-    this.tether.destroy()
-    this.tether = null
-  }
-
-  updateLocation(boardName, groupName, groupIndex, tileIndex) {
+  updateLocation(boardName, groupName, groupIndex, tileIndex, isSmallTile) {
     ;(this.boardName = boardName),
       (this.groupName = groupName),
       (this.groupIndex = groupIndex),
       (this.tileIndex = tileIndex)
+    this.isSmallTile = isSmallTile
+    this.isSelected = false
+    this.redraw()
+    if (this.boardName !== 'common') {
+      setTimeout(() => this.rotate(0))
+    }
     this.tether && this.tether.setOptions(this.tetherOptions)
   }
 
-  rotate() {
-    this.rotationAngle = (this.rotationAngle + 4) % 360
+  redraw() {
+    this.topFace.setAttribute('stroke-width', this.isSmallTile ? '1' : '2')
+    this.rightFace.setAttribute('stroke-width', this.isSmallTile ? '1' : '2')
+    this.leftFace.setAttribute('stroke-width', this.isSmallTile ? '1' : '2')
     this.topFace.setAttribute('d', this.topFacePath)
     this.rightFace.setAttribute('d', this.rightFacePath)
     this.leftFace.setAttribute('d', this.leftFacePath)
+  }
+
+  rotate(angle) {
+    if (angle !== null && angle !== undefined) {
+      this.rotationAngle = angle
+    } else {
+      this.rotationAngle = (this.rotationAngle + 3) % 360
+    }
+    this.redraw()
   }
 }

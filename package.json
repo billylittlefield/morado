@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/matthewsymonds/azul#readme",
   "dependencies": {
+    "jquery": "^3.3.1",
     "webpack-node-externals": "^1.7.2"
   }
 }

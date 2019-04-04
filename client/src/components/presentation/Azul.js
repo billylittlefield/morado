@@ -10,13 +10,6 @@ import { STARTING_PLAYER } from '@shared/azul/game-invariants'
 export default class Azul extends React.Component {
   constructor(props) {
     super(props)
-    this.state = { selectedTiles: [] }
-  }
-
-  componentDidUpdate() {
-    this.props.tileList.forEach(t => {
-      t.setParent(this)
-    })
   }
 
   getUserPlayer() {
@@ -32,30 +25,14 @@ export default class Azul extends React.Component {
     return _.reject(this.props.players, opponent => opponent === userPlayer)
   }
 
-  selectTile(tile) {
-    let selectedTiles = []
-    if (!this.state.selectedTiles.includes(tile)) {
-      selectedTiles = this.props.tileList.filter(t => {
-        return (
-          t.groupName === tile.groupName &&
-          t.groupIndex === tile.groupIndex &&
-          [tile.color, STARTING_PLAYER].includes(t.color)
-        )
-      })
-    }
-    this.setState({ selectedTiles })
-    this.props.selectTiles(selectedTiles)
-  }
-
   placeTilesFromFactoryOrTable(targetRowIndex) {
-    const factoryIndex = this.state.selectedTiles[0].groupName === 'table' ? -1 : this.state.selectedTiles[0].groupIndex
+    const selectedTiles = this.props.selectedTiles
+    const factoryIndex = selectedTiles[0].groupName === 'table' ? -1 : selectedTiles[0].groupIndex
     this.props.pullAndStageTiles({
       factoryIndex,
-      tileColor: _.reject(this.state.selectedTiles, { color: STARTING_PLAYER })[0].color,
+      tileColor: _.reject(selectedTiles, { color: STARTING_PLAYER })[0].color,
       targetRowIndex,
     })
-
-    this.setState({ selectedTiles: [] })
   }
 
   transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex) {
@@ -64,30 +41,6 @@ export default class Azul extends React.Component {
       columnIndex,
       tileColor,
       seatIndex,
-    })
-  }
-
-  renderTiles() {
-    const smallTileBoards = this.getOpponents().map(o => `p${o.seatIndex}`)
-    return this.props.tileList.map(tile => {
-      const isHighlighted = this.state.selectedTiles.includes(tile)
-      const highlightClass = isHighlighted ? ' highlight' : ''
-      const sizeClass = smallTileBoards.includes(tile.boardName) ? ' tile-small' : ''
-      return (
-        <svg
-          id={tile.id}
-          key={tile.id}
-          className={`tile tile-${tile.color}${highlightClass}${sizeClass}`}>
-          <path
-            stroke="#fff"
-            strokeWidth="2px"
-            d={tile.topFacePath}
-            onClick={() => this.selectTile(tile)}
-          />
-          <path stroke="#fff" strokeWidth="2px" d={tile.leftFacePath} />
-          <path stroke="#fff" strokeWidth="2px" d={tile.rightFacePath} />
-        </svg>
-      )
     })
   }
 
@@ -102,15 +55,15 @@ export default class Azul extends React.Component {
         <section className="azul">
           <div id="tile-container"></div>
           <div className="left-container">
-            <FactoryList factories={this.props.factories} tableTiles={this.props.tableTiles} />
             <PlayerBoard
               player={userPlayer}
               activeSeatIndex={this.props.activeSeatIndex}
-              selectedTiles={this.state.selectedTiles}
+              selectedTiles={this.props.selectedTiles}
               placeTilesFromFactoryOrTable={this.placeTilesFromFactoryOrTable.bind(this)}
               transferTileToFinalRow={this.transferTileToFinalRow.bind(this)}
               rowsPendingTileTransfer={rowsPendingTileTransfer}
             />
+            <FactoryList factories={this.props.factories} tableTiles={this.props.tableTiles} />
           </div>
 
           <div className="right-container">

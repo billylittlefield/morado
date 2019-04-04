@@ -135,7 +135,7 @@ function applyFactoryRefill(state, action) {
         draft.freshTiles = draft.discardTiles
         draft.discardTiles = []
         freshTileIndex = draft.freshTiles.findIndex(t => t === tile)
-        if (freshTileIndex === 0) {
+        if (freshTileIndex === -1) {
           throw new Error('tile bag does not contain tile being requested')
         }
       }

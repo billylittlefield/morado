@@ -79,7 +79,6 @@ class AzulContainer extends React.Component {
 
   componentDidUpdate() {
     if (this.props.gameState && this.props.userInfo.isLoggedIn !== this.state.isLoggedIn) {
-      this.resetTethers()
       this.setInitialTiles({ ...this.props.gameState })
       this.setState({ ...this.state, isLoggedIn: !this.state.isLoggedIn })
     }
@@ -106,22 +105,26 @@ class AzulContainer extends React.Component {
   }
 
   setInitialTiles(gameState) {
+    this.state.tileList.forEach(t => t.destroy())
     let tileList = []
     gameState.factories.forEach((factory, factoryIndex) => {
       factory.forEach((tileColor, positionIndex) => {
-        tileList.push(new Tile(tileColor, 'common', 'factory', factoryIndex, positionIndex))
+        tileList.push(new Tile(this, tileColor, 'common', 'factory', factoryIndex, positionIndex))
       })
     })
     gameState.tableTiles.forEach((tileColor, positionIndex) => {
-      tileList.push(new Tile(tileColor, 'common', 'table', 0, positionIndex))
+      tileList.push(new Tile(this, tileColor, 'common', 'table', 0, positionIndex))
     })
     gameState.players.forEach((player, seatIndex) => {
+      const isSmallTile = player.userId !== this.props.userInfo.userId
       player.stagingRows.forEach((stagingRow, rowIndex) => {
         stagingRow.tiles.forEach((tileColor, positionIndex) => {
           if (tileColor === null) {
             return
           }
-          tileList.push(new Tile(tileColor, `p${seatIndex}`, 'staging', rowIndex, positionIndex))
+          tileList.push(
+            new Tile(this, tileColor, `p${seatIndex}`, 'staging', rowIndex, positionIndex, isSmallTile)
+          )
         })
       })
       player.finalRows.forEach((finalRow, rowIndex) => {
@@ -129,22 +132,20 @@ class AzulContainer extends React.Component {
           if (tileColor === null) {
             return
           }
-          tileList.push(new Tile(tileColor, `p${seatIndex}`, 'final', rowIndex, positionIndex))
+          tileList.push(
+            new Tile(this, tileColor, `p${seatIndex}`, 'final', rowIndex, positionIndex, isSmallTile)
+          )
         })
       })
       player.brokenTiles.forEach((tileColor, positionIndex) => {
         if (tileColor === null) {
           return
         }
-        tileList.push(new Tile(tileColor, `p${seatIndex}`, 'broken', 0, positionIndex))
+        tileList.push(new Tile(this, tileColor, `p${seatIndex}`, 'broken', 0, positionIndex, isSmallTile))
       })
     })
 
     this.setState({ tileList })
-  }
-
-  resetTethers() {
-    this.state.tileList.forEach(tile => tile.destroyTether())
   }
 
   updateTethers(gameAction) {
@@ -173,7 +174,7 @@ class AzulContainer extends React.Component {
         return
       }
       const tileColor = TILE_COLORS[parseInt(tileIndex)]
-      newTiles.push(new Tile(tileColor, 'common', 'factory', factoryIndex, positionIndex))
+      newTiles.push(new Tile(this, tileColor, 'common', 'factory', factoryIndex, positionIndex))
     })
 
     this.setState({ tileList: [...this.state.tileList, ...newTiles] })
@@ -181,6 +182,8 @@ class AzulContainer extends React.Component {
 
   updateTethersForTilePull(params) {
     const { seatIndex, factoryIndex, tileColor, targetRowIndex } = params
+    const isOpponentPull =
+      _.find(this.props.gameState.players, { seatIndex }).userId !== this.props.userInfo.userId
     const tileList = this.state.tileList
     const brokenTiles = tileList.filter(t => t.targetLocation.startsWith(`p${seatIndex}-broken`))
     const targetRowTiles =
@@ -214,13 +217,21 @@ class AzulContainer extends React.Component {
           `p${seatIndex}`,
           'staging',
           targetRowIndex,
-          currentRowCount + numToStagingRow
+          currentRowCount + numToStagingRow,
+          isOpponentPull
         )
         numToStagingRow++
       } else if (currentBrokenTileCount + numToBrokenTiles < DROPPED_TILE_PENALTIES.length) {
-        tile.updateLocation(`p${seatIndex}`, 'broken', 0, currentBrokenTileCount + numToBrokenTiles)
+        tile.updateLocation(
+          `p${seatIndex}`,
+          'broken',
+          0,
+          currentBrokenTileCount + numToBrokenTiles,
+          isOpponentPull
+        )
         numToBrokenTiles++
       } else {
+        tile.destroy()
         tileIdsToRemove.push(tile.id)
       }
     })
@@ -238,12 +249,24 @@ class AzulContainer extends React.Component {
   transferTilesToFinalRow(params) {
     const { seatIndex, rowIndex, columnIndex, tileColor } = params
     const tileList = this.state.tileList
-
+    const isOpponentTransfer =
+      _.find(this.props.gameState.players, { seatIndex }).userId !== this.props.userInfo.userId
     const tileToTransfer = _.find(tileList, {
       targetLocation: `p${seatIndex}-staging-${rowIndex}-0`,
       color: tileColor,
     })
-    tileToTransfer.updateLocation(`p${seatIndex}`, 'final', rowIndex, columnIndex)
+    tileToTransfer.updateLocation(
+      `p${seatIndex}`,
+      'final',
+      rowIndex,
+      columnIndex,
+      isOpponentTransfer
+    )
+    tileList.forEach(t => {
+      if (t.targetLocation.startsWith(`p${seatIndex}-staging-${rowIndex}`)) {
+        t.destroy()
+      }
+    })
 
     this.setState({
       tileList: _.reject(tileList, t =>
@@ -254,13 +277,39 @@ class AzulContainer extends React.Component {
 
   removeBrokenTiles() {
     const tileList = this.state.tileList
-    _.find(tileList, { color: STARTING_PLAYER }).updateLocation('common', 'table', 0, 0)
+    _.find(tileList, { color: STARTING_PLAYER }).updateLocation('common', 'table', 0, 0, false)
+    tileList.forEach(t => {
+      if (t.groupName === 'broken') {
+        t.destroy()
+      }
+    })
     this.setState({ tileList: _.reject(tileList, t => t.groupName === 'broken') })
   }
 
-  selectTiles(tiles) {
-    this.state.tileList.forEach(t => t.stopSpinning())
-    tiles.forEach(t => t.startSpinning())
+  selectTile(tile) {
+    if (!tile.isCommunalTile) {
+      return
+    }
+    if (tile.isSelected) {
+      this.state.tileList.forEach(t => t.unselect())
+      this.setState({ tileList: this.state.tileList })
+    } else {
+      this.selectTiles(tile.groupName, tile.groupIndex, tile.color)
+    }
+  }
+
+  selectTiles(groupName, groupIndex, color) {
+    this.state.tileList.forEach(tile => {
+      if (tile.isSelected) { tile.unselect() }
+      if (
+        groupName === tile.groupName &&
+        groupIndex === tile.groupIndex &&
+        [color, STARTING_PLAYER].includes(tile.color)
+      ) {
+          tile.select()
+        }
+      })
+    this.setState({ tileList: this.state.tileList })
   }
 
   pullAndStageTiles(args) {
@@ -309,6 +358,10 @@ class AzulContainer extends React.Component {
     this.updateTethers(gameAction)
   }
 
+  getSelectedTiles() {
+    return this.state.tileList.filter(t => t.isSelected)
+  }
+
   render() {
     if (!this.props.gameState) {
       return <div>Loading...</div>
@@ -316,7 +369,7 @@ class AzulContainer extends React.Component {
     return (
       <Azul
         {...this.props.gameState}
-        tileList={this.state.tileList}
+        selectedTiles={this.getSelectedTiles()}
         userInfo={this.props.userInfo}
         selectTiles={this.selectTiles.bind(this)}
         pullAndStageTiles={this.pullAndStageTiles.bind(this)}
