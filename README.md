@@ -1,4 +1,6 @@
-# azul
+# Morado
+
+A tile-laying board game implemented as a web-app using React, Redux, Socket.IO, Express, and MySQL.
 
 The app is structured accordingly:
 ```

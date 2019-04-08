@@ -1,5 +1,5 @@
 {
-  "name": "azul",
+  "name": "morado",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/matthewsymonds/azul.git"
+    "url": "git+https://github.com/billylittlefield/morado.git"
   },
   "author": "Billy Littlefield, Matthew Symonds",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/matthewsymonds/azul/issues"
+    "url": "https://github.com/billylittlefield/morado/issues"
   },
-  "homepage": "https://github.com/matthewsymonds/azul#readme",
+  "homepage": "https://github.com/billylittlefield/morado#readme",
   "devDependencies": {
     "@babel/core": "7.0.0",
     "@babel/plugin-proposal-class-properties": "^7.3.4",
