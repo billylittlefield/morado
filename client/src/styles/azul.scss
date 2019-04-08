@@ -10,22 +10,42 @@
   .top-face {
     pointer-events: auto;
   }
-  &.tile-small {
-    width: 10px;
-    height: 10px;
-  }
 
+  &.tile-starting-player .top-face {
+    fill: url(#starting-player-tile)
+  }
+  &.tile-small.tile-starting-player .top-face {
+    fill: url(#starting-player-tile-small)
+  }
   &.tile-snowflake .top-face {
-    fill: 'url(#snowflake-tile)'
+    fill: url(#snowflake-tile)
   }
   &.tile-small.tile-snowflake .top-face {
-    fill: 'url(#snowflake-tile-small)'
+    fill: url(#snowflake-tile-small)
   }
-  &.tile-starting-tile .top-face {
-    fill: 'url(#snowflake-tile)'
+  &.tile-black .top-face {
+    fill: url(#black-tile)
   }
-  &.tile-small.tile-starting-tile .top-face {
-    fill: 'url(#snowflake-tile-small)'
+  &.tile-small.tile-black .top-face {
+    fill: url(#black-tile-small)
+  }
+  &.tile-blue .top-face {
+    fill: url(#blue-tile)
+  }
+  &.tile-small.tile-blue .top-face {
+    fill: url(#blue-tile-small)
+  }
+  &.tile-red .top-face {
+    fill: url(#red-tile)
+  }
+  &.tile-small.tile-red .top-face {
+    fill: url(#red-tile-small)
+  }
+  &.tile-yellow .top-face {
+    fill: url(#yellow-tile)
+  }
+  &.tile-small.tile-yellow .top-face {
+    fill: url(#yellow-tile-small)
   }
 
   // &.tile-starting-player {

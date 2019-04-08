@@ -71,7 +71,7 @@ export default class Tile {
   createElements(id, color) {
     const tileElement = document.createElementNS(svgNS, 'svg');
     tileElement.setAttribute('id', id);
-    tileElement.setAttribute('class', `tile tile-${color}`);
+    tileElement.setAttribute('class', `tile tile-${color} ${this.isSmallTile ? 'tile-small' : ''}`);
     const topFace = document.createElementNS(svgNS, 'rect');
     topFace.setAttribute('x', this.isSmallTile ? 19 : 9);
     topFace.setAttribute('y', this.isSmallTile ? 19 : 9);
@@ -79,7 +79,6 @@ export default class Tile {
     topFace.setAttribute('height', this.isSmallTile ? 21 : 42);
     topFace.setAttribute('transform', `rotate(${this.rotationAngle} 30 30)`);
     topFace.setAttribute('class', 'top-face');
-    topFace.setAttribute('fill', this.isSmallTile ? `url(#${this.color}-tile-small)` : `url(#${this.color}-tile)`);
     topFace.addEventListener('click', this.handleClick.bind(this));
     const leftFace = document.createElementNS(svgNS, 'path');
     leftFace.setAttribute('d', this.leftFacePath);
@@ -264,9 +263,9 @@ export default class Tile {
     this.isSmallTile = isSmallTile;
     this.isSelected = false;
     if (this.isSmallTile) {
-      this.tileELement.classList.add('tile-small')
+      this.tileElement.classList.add('tile-small')
     } else {
-      this.tileELement.classList.remove('tile-small')
+      this.tileElement.classList.remove('tile-small')
     }
     this.rightFace.setAttribute('stroke-width', this.isSmallTile ? '1' : '2');
     this.leftFace.setAttribute('stroke-width', this.isSmallTile ? '1' : '2');
