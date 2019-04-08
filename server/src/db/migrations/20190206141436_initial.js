@@ -11,7 +11,7 @@ exports.up = function(knex, Promise) {
       table.timestamp('start_time').nullable()
       table.json('options').notNullable()
       table
-        .boolean('isComplete')
+        .boolean('is_complete')
         .notNullable()
         .defaultTo(false)
       table
@@ -37,6 +37,8 @@ exports.up = function(knex, Promise) {
         .integer('seat_index')
         .notNullable()
         .unsigned()
+      table.integer('final_score').unsigned()
+      table.integer('final_place').unsigned()
     }),
 
     knex.schema.createTable('azul_actions', table => {

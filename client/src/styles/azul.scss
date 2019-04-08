@@ -15,41 +15,54 @@
     height: 10px;
   }
 
-  &.tile-starting-player {
-    path {
-      fill: grey;
-    }
+  &.tile-snowflake .top-face {
+    fill: 'url(#snowflake-tile)'
+  }
+  &.tile-small.tile-snowflake .top-face {
+    fill: 'url(#snowflake-tile-small)'
+  }
+  &.tile-starting-tile .top-face {
+    fill: 'url(#snowflake-tile)'
+  }
+  &.tile-small.tile-starting-tile .top-face {
+    fill: 'url(#snowflake-tile-small)'
   }
 
-  &.tile-snowflake {
-    path {
-      fill: aqua;
-    }
-  }
+  // &.tile-starting-player {
+  //   .top-face {
+  //     fill: 'url(#starting-player)';
+  //   }
+  // }
 
-  &.tile-red {
-    path {
-      fill: red;
-    }
-  }
+  // &.tile-snowflake {
+  //   .top-face {
+  //     fill: aqua;
+  //   }
+  // }
 
-  &.tile-blue {
-    path {
-      fill: darkblue;
-    }
-  }
+  // &.tile-red {
+  //   .top-face {
+  //     fill: red;
+  //   }
+  // }
 
-  &.tile-black {
-    path {
-      fill: black;
-    }
-  }
+  // &.tile-blue {
+  //   .top-face {
+  //     fill: darkblue;
+  //   }
+  // }
 
-  &.tile-yellow {
-    path {
-      fill: gold;
-    }
-  }
+  // &.tile-black {
+  //   .top-face {
+  //     fill: black;
+  //   }
+  // }
+
+  // &.tile-yellow {
+  //   .top-face {
+  //     fill: gold;
+  //   }
+  // }
 }
 
 // ==============================

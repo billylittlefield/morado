@@ -47,9 +47,14 @@ module.exports = {
                 path.join(__dirname, '**/node_modules/@material')
               ).map((dir) => path.dirname(dir))
             }
-          }
+          },
+          
         ],
       },
+      {
+        test: /\.(png|jp(e*)g|svg)$/,  
+        use: [ 'file-loader' ]
+      }
     ],
   },
   plugins: [

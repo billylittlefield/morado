@@ -1,5 +1,5 @@
-import React from 'react'
-import TileSquare from 'components/presentation/TileSquare'
+import React from 'react';
+import TileSquare from 'components/presentation/TileSquare';
 
 function Factory(props) {
   function renderTilesInFactory(tiles) {
@@ -12,22 +12,18 @@ function Factory(props) {
           shouldHighlight={false}
           handleClick={() => {}}
         />
-      )
-    })
+      );
+    });
 
     return (
       <>
-        <div className="factory-tile-row">
-          {elements.slice(0, 2)}
-        </div>
-        <div className="factory-tile-row">
-          {elements.slice(2)}
-        </div>
+        <div className="factory-tile-row">{elements.slice(0, 2)}</div>
+        <div className="factory-tile-row">{elements.slice(2)}</div>
       </>
-    )
+    );
   }
 
-  return <div className="factory">{renderTilesInFactory(props.tiles)}</div>
+  return <div className="factory">{renderTilesInFactory(props.tiles)}</div>;
 }
 
-export default Factory
+export default Factory;

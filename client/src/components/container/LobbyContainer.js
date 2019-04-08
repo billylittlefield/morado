@@ -1,10 +1,10 @@
-import React from 'react'
-import { connect } from 'react-redux'
-import axios from 'axios'
-import _ from 'lodash'
-import { Redirect, withRouter } from 'react-router-dom'
+import React from 'react';
+import { connect } from 'react-redux';
+import http from 'http-instance'
+import _ from 'lodash';
+import { Redirect, withRouter } from 'react-router-dom';
 
-import Lobby from 'components/presentation/Lobby'
+import Lobby from 'components/presentation/Lobby';
 import {
   logout,
   connectedToGame,
@@ -12,61 +12,61 @@ import {
   receivedActiveGames,
   receivedAvailableGames,
   createdNewGame,
-} from 'redux/actions'
+} from 'redux/actions';
 
 class LobbyContainer extends React.Component {
   componentDidMount() {
     if (!this.props.userId) {
-      return
+      return;
     }
 
-    axios
+    http
       .get(`/users/${this.props.userId}/games`)
       .then(res => {
-        const { games } = res.data
-        this.props.receivedActiveGames({ games })
+        const { games } = res.data;
+        this.props.receivedActiveGames({ games });
       })
       .catch(err => {
-        throw err
-      })
+        throw err;
+      });
 
-    axios
+    http
       .get('/games/available')
       .then(res => {
-        this.props.receivedAvailableGames({ games: res.data.games })
+        this.props.receivedAvailableGames({ games: res.data.games });
       })
       .catch(err => {
-        throw err
-      })
+        throw err;  
+      });
   }
 
   joinGame(gameId) {
-    const userId = this.props.userId
-    axios
+    const userId = this.props.userId;
+    http
       .post('/gameplays', { gameId, userId })
       .then(res => {
-        this.props.history.push(`/azul/${gameId}`)
+        this.props.history.push(`/azul/${gameId}`);
       })
       .catch(err => {
-        throw err
-      })
+        throw err;
+      });
   }
 
   createGame(name, numPlayers, useColorTemplate) {
-    axios
-      .post('/games', { name, numPlayers, useColorTemplate })
+    http
+      .post('/games', { name, numPlayers, useColorTemplate }, { withCredentials: true, data: {} })
       .then(res => {
-        this.props.createdNewGame({ game: res.data })
-        this.props.history.push(`/azul/${res.data.gameId}`)
+        this.props.createdNewGame({ game: res.data });
+        this.props.history.push(`/azul/${res.data.gameId}`);
       })
       .catch(err => {
-        throw err
-      })
+        throw err;
+      });
   }
 
   render() {
     if (this.props.shouldRedirectToLogin) {
-      return <Redirect to="/login" />
+      return <Redirect to="/login" />;
     }
 
     return (
@@ -76,7 +76,7 @@ class LobbyContainer extends React.Component {
         joinGame={this.joinGame.bind(this)}
         createGame={this.createGame.bind(this)}
       />
-    )
+    );
   }
 }
 
@@ -86,7 +86,7 @@ function mapStateToProps(state) {
     userId: state.userInfo.userId,
     activeGames: state.lobby.activeGames,
     availableGames: state.lobby.availableGames,
-  }
+  };
 }
 
 export default connect(
@@ -99,4 +99,4 @@ export default connect(
     receivedAvailableGames,
     createdNewGame,
   }
-)(withRouter(LobbyContainer))
+)(withRouter(LobbyContainer));

@@ -1,25 +1,25 @@
-import React from 'react'
-import { connect } from 'react-redux'
-import { withRouter } from 'react-router-dom'
-import axios from 'axios'
+import React from 'react';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+import http from 'http-instance'
 
-import { logout } from 'redux/actions'
+import { logout } from 'redux/actions';
 
 function Profile(props) {
-  const { userId, username, isLoggedIn } = props.userInfo
+  const { userId, username, isLoggedIn } = props.userInfo;
 
   function submitLogout() {
-    axios
+    http
       .post('/auth/logout', {
         userId,
       })
       .finally(() => {
-        props.logout()
-      })
+        props.logout();
+      });
   }
 
   function redirectToLogin() {
-    props.history.push('/login')
+    props.history.push('/login');
   }
 
   const logoutButton = (
@@ -29,7 +29,7 @@ function Profile(props) {
         <span className="mdc-button__label">Logout</span>
       </button>
     </>
-  )
+  );
 
   const loginButton = (
     <>
@@ -37,16 +37,12 @@ function Profile(props) {
         <span className="mdc-button__label">Login</span>
       </button>
     </>
-  )
+  );
 
-  return (
-    <div className="profile-container">
-      {isLoggedIn ? logoutButton : loginButton}
-    </div>
-  )
+  return <div className="profile-container">{isLoggedIn ? logoutButton : loginButton}</div>;
 }
 
 export default connect(
   state => ({ userInfo: state.userInfo }),
   { logout }
-)(withRouter(Profile))
+)(withRouter(Profile));

@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
-import _ from 'lodash'
-import moment from 'moment'
-import Modal from 'react-modal'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react';
+import _ from 'lodash';
+import moment from 'moment';
+import Modal from 'react-modal';
+import { Link } from 'react-router-dom';
 
 function Lobby(props) {
-  const [createGameModalIsOpen, setCreateGameModalIsOpen] = useState(false)
-  const [newGameName, setNewGameName] = useState('')
-  const [newGameSize, setNewGameSize] = useState(2)
-  const [newGameTemplate, setNewGameTemplate] = useState(true)
+  const [createGameModalIsOpen, setCreateGameModalIsOpen] = useState(false);
+  const [newGameName, setNewGameName] = useState('');
+  const [newGameSize, setNewGameSize] = useState(2);
+  const [newGameTemplate, setNewGameTemplate] = useState(true);
 
   const modalStyle = {
     content: {
@@ -19,7 +19,7 @@ function Lobby(props) {
       marginRight: '-50%',
       transform: 'translate(-50%, -50%)',
     },
-  }
+  };
 
   function renderActiveGames() {
     return (
@@ -49,11 +49,11 @@ function Lobby(props) {
                   </Link>
                 </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
-    )
+    );
   }
 
   function renderAvailableGames() {
@@ -77,31 +77,32 @@ function Lobby(props) {
                 <td>{game.usernames.join(', ') || 'Empty'}</td>
                 <td>{game.options.useColorTemplate ? 'Standard' : 'No template'}</td>
                 <td>
-                  <button className="mdc-button mdc-button--unelevated"
+                  <button
+                    className="mdc-button mdc-button--unelevated"
                     onClick={() => {
-                      props.joinGame(game.gameId)
+                      props.joinGame(game.gameId);
                     }}>
                     Join
                   </button>
                 </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
-    )
+    );
   }
 
   function openCreateGameModal() {
-    setCreateGameModalIsOpen(true)
+    setCreateGameModalIsOpen(true);
   }
 
   function createNewGame() {
-    props.createGame(newGameName, newGameSize, newGameTemplate)
-    setNewGameName('')
-    setNewGameSize(2)
-    setNewGameTemplate(true)
-    setCreateGameModalIsOpen(false)
+    props.createGame(newGameName, newGameSize, newGameTemplate);
+    setNewGameName('');
+    setNewGameSize(2);
+    setNewGameTemplate(true);
+    setCreateGameModalIsOpen(false);
   }
 
   return (
@@ -112,7 +113,7 @@ function Lobby(props) {
         <button
           className="mdc-button mdc-button--unelevated new-game-button"
           onClick={() => {
-            openCreateGameModal()
+            openCreateGameModal();
           }}>
           Create new game
         </button>
@@ -154,8 +155,8 @@ function Lobby(props) {
           <p>
             <button
               onClick={e => {
-                e.preventDefault()
-                createNewGame()
+                e.preventDefault();
+                createNewGame();
               }}>
               Create
             </button>
@@ -163,7 +164,7 @@ function Lobby(props) {
         </form>
       </Modal>
     </section>
-  )
+  );
 }
 
-export default Lobby
+export default Lobby;

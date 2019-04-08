@@ -1,38 +1,38 @@
-import React from 'react'
-import _ from 'lodash'
-import { Link } from 'react-router-dom'
+import React from 'react';
+import _ from 'lodash';
+import { Link } from 'react-router-dom';
 
-import OpponentList from 'components/presentation/OpponentList'
-import FactoryList from 'components/presentation/FactoryList'
-import PlayerBoard from 'components/presentation/PlayerBoard'
-import { STARTING_PLAYER } from '@shared/azul/game-invariants'
+import OpponentList from 'components/presentation/OpponentList';
+import FactoryList from 'components/presentation/FactoryList';
+import PlayerBoard from 'components/presentation/PlayerBoard';
+import { STARTING_PLAYER } from '@shared/azul/game-invariants';
 
 export default class Azul extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
   }
 
   getUserPlayer() {
-    return _.find(this.props.players, { userId: this.props.userInfo.userId })
+    return _.find(this.props.players, { userId: this.props.userInfo.userId });
   }
 
   getActivePlayer() {
-    return _.find(this.props.players, { seatIndex: this.props.activeSeatIndex })
+    return _.find(this.props.players, { seatIndex: this.props.activeSeatIndex });
   }
 
   getOpponents() {
-    const userPlayer = this.getUserPlayer()
-    return _.reject(this.props.players, opponent => opponent === userPlayer)
+    const userPlayer = this.getUserPlayer();
+    return _.reject(this.props.players, opponent => opponent === userPlayer);
   }
 
   placeTilesFromFactoryOrTable(targetRowIndex) {
-    const selectedTiles = this.props.selectedTiles
-    const factoryIndex = selectedTiles[0].groupName === 'table' ? -1 : selectedTiles[0].groupIndex
+    const selectedTiles = this.props.selectedTiles;
+    const factoryIndex = selectedTiles[0].groupName === 'table' ? -1 : selectedTiles[0].groupIndex;
     this.props.pullAndStageTiles({
       factoryIndex,
       tileColor: _.reject(selectedTiles, { color: STARTING_PLAYER })[0].color,
       targetRowIndex,
-    })
+    });
   }
 
   transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex) {
@@ -41,19 +41,19 @@ export default class Azul extends React.Component {
       columnIndex,
       tileColor,
       seatIndex,
-    })
+    });
   }
 
   render() {
-    const userPlayer = this.getUserPlayer()
-    const opponents = this.getOpponents()
+    const userPlayer = this.getUserPlayer();
+    const opponents = this.getOpponents();
     const rowsPendingTileTransfer =
-      userPlayer && this.props.seatsRequiringInput[userPlayer.seatIndex]
+      userPlayer && this.props.seatsRequiringInput[userPlayer.seatIndex];
     return (
       <>
         <Link to="/lobby">Back to Lobby</Link>
         <section className="azul">
-          <div id="tile-container"></div>
+          <div id="tile-container" />
           <div className="left-container">
             <PlayerBoard
               player={userPlayer}
@@ -77,6 +77,6 @@ export default class Azul extends React.Component {
           </div>
         </section>
       </>
-    )
+    );
   }
 }

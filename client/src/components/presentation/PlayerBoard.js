@@ -1,57 +1,57 @@
-import React from 'react'
+import React from 'react';
 
-import { STARTING_PLAYER, DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants'
-import Row from 'components/presentation/Row'
-import RowList from 'components/presentation/RowList'
+import { STARTING_PLAYER, DROPPED_TILE_PENALTIES } from '@shared/azul/game-invariants';
+import Row from 'components/presentation/Row';
+import RowList from 'components/presentation/RowList';
 
 function PlayerBoard(props) {
   if (!props.player) {
-    return null
+    return null;
   }
-  const { stagingRows, finalRows, brokenTiles, seatIndex } = props.player
+  const { stagingRows, finalRows, brokenTiles, seatIndex } = props.player;
 
   const isActiveAndHasPendingSelection =
-    seatIndex === props.activeSeatIndex && props.selectedTiles.length > 0
+    seatIndex === props.activeSeatIndex && props.selectedTiles.length > 0;
 
   function getPossibleStagingRowPlacements() {
     if (!isActiveAndHasPendingSelection) {
-      return null
+      return null;
     }
 
-    const tileColor = _.reject(props.selectedTiles, {color: STARTING_PLAYER})[0].color
+    const tileColor = _.reject(props.selectedTiles, { color: STARTING_PLAYER })[0].color;
     return stagingRows.map((row, rowIndex) => {
       // If the staging row is already full
       if (row.tiles.filter(t => t !== null).length === row.rowSize) {
-        return false
+        return false;
       }
 
       // If the staging row is already storing another color
       if (row.tiles[0] !== tileColor && row.tiles[0] !== null) {
-        return false
+        return false;
       }
 
       // If the corresponding final row already contains that color
       if (finalRows[rowIndex].tiles.includes(tileColor)) {
-        return false
+        return false;
       }
 
-      return true
-    })
+      return true;
+    });
   }
 
-  const possibleRowPlacements = getPossibleStagingRowPlacements()
+  const possibleRowPlacements = getPossibleStagingRowPlacements();
 
   // Add one verification check before propagating action to ensure that the target row can
   // accept the tiles from the factory
   function verifyAndPlaceTilesFromFactory(rowIndex) {
     if (possibleRowPlacements && possibleRowPlacements[rowIndex]) {
-      props.placeTilesFromFactoryOrTable(rowIndex)
+      props.placeTilesFromFactoryOrTable(rowIndex);
     }
   }
 
   function verifyAndPlaceTilesFromTable(rowIndex) {
     if (rowIndex === -1 && isActiveAndHasPendingSelection) {
-      props.placeTilesFromFactoryOrTable(rowIndex)
+      props.placeTilesFromFactoryOrTable(rowIndex);
     }
   }
 
@@ -61,8 +61,8 @@ function PlayerBoard(props) {
       props.rowsPendingTileTransfer[rowIndex] &&
       props.rowsPendingTileTransfer[rowIndex].includes(columnIndex)
     ) {
-      const tileColor = stagingRows[rowIndex].tiles[0]
-      props.transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex)
+      const tileColor = stagingRows[rowIndex].tiles[0];
+      props.transferTileToFinalRow(rowIndex, columnIndex, tileColor, seatIndex);
     }
   }
 
@@ -97,7 +97,7 @@ function PlayerBoard(props) {
         onRowSelected={verifyAndPlaceTilesFromTable}
       />
     </div>
-  )
+  );
 }
 
-export default PlayerBoard
+export default PlayerBoard;

@@ -1,16 +1,22 @@
-import db from 'db'
-import _ from 'lodash'
+import db from 'db';
+import _ from 'lodash';
 
-import AzulHelpers from '@shared/azul/helpers'
-import { shuffle } from '@shared/util'
-import { REQUIRED_ORDER, TILE_TRANSFER, FACTORY_REFILL, TILE_DUMP, STARTING_PLAYER } from '@shared/azul/game-invariants'
+import AzulHelpers from '@shared/azul/helpers';
+import { shuffle } from '@shared/util';
+import {
+  REQUIRED_ORDER,
+  TILE_TRANSFER,
+  FACTORY_REFILL,
+  TILE_DUMP,
+  STARTING_PLAYER,
+} from '@shared/azul/game-invariants';
 
 async function createGame(options) {
   const gameId = (await db('games').insert({
     options: JSON.stringify(options),
-  }))[0]
+  }))[0];
 
-  return gameId
+  return gameId;
 }
 
 async function createGamePlay(gameId, userId, seatIndex) {
@@ -18,14 +24,14 @@ async function createGamePlay(gameId, userId, seatIndex) {
     const playerCountQuery = await db('game_plays')
       .count({ numPlayers: 'user_id' })
       .where('game_plays.game_id', gameId)
-      .groupBy('game_plays.game_id')
-    seatIndex = playerCountQuery.length > 0 ? playerCountQuery[0].numPlayers : 0
+      .groupBy('game_plays.game_id');
+    seatIndex = playerCountQuery.length > 0 ? playerCountQuery[0].numPlayers : 0;
   }
   await db('game_plays').insert({
     game_id: gameId,
     user_id: userId,
     seat_index: seatIndex,
-  })
+  });
 }
 
 async function fetchGames({ isStarted, isFull }) {
@@ -35,20 +41,20 @@ async function fetchGames({ isStarted, isFull }) {
       numPlayers: db.raw('count(game_plays.user_id)'),
       maxPlayers: db.raw('json_extract(games.options, "$.numPlayers")'),
     })
-    .leftJoin('game_plays', 'games.id', 'game_plays.game_id')
+    .leftJoin('game_plays', 'games.id', 'game_plays.game_id');
 
   if (isStarted) {
-    query.whereNotNull('games.start_time')
+    query.whereNotNull('games.start_time');
   } else {
-    query.whereNull('games.start_time')
+    query.whereNull('games.start_time');
   }
 
-  let games = await query.groupBy('games.id')
+  let games = await query.groupBy('games.id');
   let filteredGames = games.filter(game => {
-    return isFull ? game.numPlayers === game.maxPlayers : game.numPlayers < game.maxPlayers
-  })
+    return isFull ? game.numPlayers === game.maxPlayers : game.numPlayers < game.maxPlayers;
+  });
 
-  return fetchGamesByIds(_.map(filteredGames, 'gameId'))
+  return fetchGamesByIds(_.map(filteredGames, 'gameId'));
 }
 
 async function fetchGamesByUserId(userId) {
@@ -59,9 +65,9 @@ async function fetchGamesByUserId(userId) {
       .join('game_plays', 'game_plays.game_id', 'games.id')
       .where('game_plays.user_id', userId),
     'gameId'
-  )
+  );
 
-  return fetchGamesByIds(activeGameIds)
+  return fetchGamesByIds(activeGameIds);
 }
 
 async function fetchGamesByIds(gameIds) {
@@ -82,18 +88,18 @@ async function fetchGamesByIds(gameIds) {
     .leftJoin('azul_actions', 'games.id', 'azul_actions.game_id')
     .whereIn('games.id', gameIds)
     .groupBy('games.id')
-    .orderBy('games.id', 'desc')
+    .orderBy('games.id', 'desc');
 
   return games.map(game => {
-    const usernames = game.usernames ? game.usernames.split(',') : []
-    const userIds = game.userIds ? game.userIds.split(',').map(Number) : []
+    const usernames = game.usernames ? game.usernames.split(',') : [];
+    const userIds = game.userIds ? game.userIds.split(',').map(Number) : [];
     return {
       ...game,
       options: JSON.parse(game.options),
       usernames,
       userIds,
-    }
-  })
+    };
+  });
 }
 
 async function startGameIfFull(gameId) {
@@ -103,19 +109,46 @@ async function startGameIfFull(gameId) {
         gameSize: db.raw('json_extract(games.options, "$.numPlayers")'),
       })
       .where('games.id', gameId))[0].gameSize
-  )
+  );
 
   const numPlayers = (await db('game_plays')
     .count('user_id as numPlayers')
-    .where('game_id', gameId))[0].numPlayers
+    .where('game_id', gameId))[0].numPlayers;
 
   if (gameSize === numPlayers) {
-    const initialFactoryRefills = AzulHelpers.generateInitialFactoryRefills(gameSize)
-    await saveAndApplyActions(gameId, initialFactoryRefills)
+    const initialFactoryRefills = AzulHelpers.generateInitialFactoryRefills(gameSize);
+    await saveAndApplyActions(gameId, initialFactoryRefills);
     await db('games')
       .where('games.id', gameId)
-      .update('start_time', new Date())
+      .update('start_time', new Date());
   }
+}
+
+async function endGame(gameId, state) {
+  const scores = state.players.map(p => p.score);
+  db.transaction(trx => {
+    const queries = [
+      db('games')
+        .where('games.id', gameId)
+        .update('isComplete', true)
+        .transacting(trx),
+    ];
+    state.players.forEach(player => {
+      const query = db('game_plays')
+        .where('user_id', player.userId)
+        .andWhere('game_id', gameId)
+        .update({
+          final_score: player.score,
+          final_place: scores.indexOf(player.score) + 1,
+        })
+        .transacting(trx); // This makes every update be in the same transaction
+      queries.push(query);
+    });
+
+    Promise.all(queries) // Once every query is written
+      .then(trx.commit) // We try to execute all of them
+      .catch(trx.rollback);
+  });
 }
 
 async function getGameState(gameId) {
@@ -126,13 +159,13 @@ async function getGameState(gameId) {
       return {
         id: game.id,
         options: JSON.parse(game.options),
-      }
-    }))[0]
+      };
+    }))[0];
 
   const players = await db('users')
     .select({ userId: 'users.id', username: 'users.username' })
     .join('game_plays', 'users.id', 'game_plays.user_id')
-    .where('game_plays.game_id', gameId)
+    .where('game_plays.game_id', gameId);
 
   const gameActions = await db('azul_actions')
     .where('azul_actions.game_id', gameId)
@@ -143,19 +176,19 @@ async function getGameState(gameId) {
         roundNumber: action.round_number,
         turnNumber: action.turn_number,
         params: JSON.parse(action.params),
-      }
-    })
+      };
+    });
 
-  const initialState = AzulHelpers.getInitialGameState(players, game.options)
-  const currentState = AzulHelpers.applyGameActions(initialState, { payload: gameActions })
-  return currentState
+  const initialState = AzulHelpers.getInitialGameState(players, game.options);
+  const currentState = AzulHelpers.applyGameActions(initialState, { payload: gameActions });
+  return currentState;
 }
 
 async function saveAndApplyActions(gameId, gameActions, gameState = null) {
   if (gameState === null) {
-    gameState = await getGameState(gameId)
+    gameState = await getGameState(gameId);
   }
-  const updatedState = await AzulHelpers.applyGameActions(gameState, { payload: gameActions })
+  const updatedState = await AzulHelpers.applyGameActions(gameState, { payload: gameActions });
 
   await db('azul_actions').insert(
     gameActions.map(action => ({
@@ -165,50 +198,59 @@ async function saveAndApplyActions(gameId, gameActions, gameState = null) {
       turn_number: action.turnNumber,
       params: JSON.stringify(action.params),
     }))
-  )
+  );
 
-  return updatedState
+  return updatedState;
 }
 
 function isRoundOver(gameState) {
-  const factoriesAreEmpty = gameState.factories.every(f => f.length === 0)
-  const noMoreTableTiles = gameState.tableTiles.every(t => t === STARTING_PLAYER)
-  return factoriesAreEmpty && noMoreTableTiles
+  const factoriesAreEmpty = gameState.factories.every(f => f.length === 0);
+  const noMoreTableTiles = gameState.tableTiles.every(t => t === STARTING_PLAYER);
+  return factoriesAreEmpty && noMoreTableTiles;
+}
+
+function isGameOver(gameState) {
+  return gameState.players.some(player => {
+    return player.finalRows.some(row => {
+      return row.tiles.filter(t => t === null).length === 0;
+    });
+  });
 }
 
 async function incrementRound(gameId) {
   await db('games')
     .where('id', gameId)
-    .increment('current_round_number', 1)
+    .increment('current_round_number', 1);
 }
 
 function generateTileDump(gameState) {
   // It's _technically_ possible for no one to have pulled the starting player tile if all
   // factories were filled with homogenous tiles. The rules don't even cover this case, but for
   // the sake of fairness, let's just randomize the starting player in this scenario.
-  const firstSeatNextRound = gameState.firstSeatNextRound || Math.floor(Math.random() * gameState.players.length)
+  const firstSeatNextRound =
+    gameState.firstSeatNextRound || Math.floor(Math.random() * gameState.players.length);
   return {
     type: TILE_DUMP,
     turnNumber: null,
     roundNumber: gameState.currentRoundNumber,
     params: {
-      firstSeatNextRound
-    }
-  }
+      firstSeatNextRound,
+    },
+  };
 }
 
 function generateFactoryRefills(gameState) {
   let shuffledTiles = shuffle(_.cloneDeep(gameState.discardTiles)).concat(
     shuffle(_.cloneDeep(gameState.freshTiles))
-  )
+  );
 
   return gameState.factories.map((factory, factoryIndex) => {
-    let factoryTiles = []
+    let factoryTiles = [];
     while (factoryTiles.length < 4) {
       if (shuffledTiles.length > 0) {
-        factoryTiles.push(shuffledTiles.pop())
+        factoryTiles.push(shuffledTiles.pop());
       } else {
-        break
+        break;
       }
     }
 
@@ -220,42 +262,42 @@ function generateFactoryRefills(gameState) {
         factoryIndex,
         factoryCode: AzulHelpers.createFactoryCodeFromTiles(factoryTiles),
       },
-    }
-  })
+    };
+  });
 }
 
 function generateTileTransfers(gameState) {
-  const { useColorTemplate } = gameState.options
-  let tileTransfers = []
+  const { useColorTemplate } = gameState.options;
+  let tileTransfers = [];
   // For every player
   gameState.players.forEach(player => {
     // Look at their staging rows
     player.stagingRows.forEach((stagingRow, rowIndex) => {
       // Only look at full staging rows:
       if (stagingRow.rowSize !== stagingRow.tiles.filter(t => t !== null).length) {
-        return
+        return;
       }
 
       // Double check that all the tiles are the same color
-      const tileColor = stagingRow.tiles[0]
+      const tileColor = stagingRow.tiles[0];
       if (!stagingRow.tiles.every(t => t === tileColor)) {
-        throw new Error('Staging row should only contain 1 color of tile')
+        throw new Error('Staging row should only contain 1 color of tile');
       }
 
       // Double check that the corresponding final row doesn't already have this tile
       if (player.finalRows[rowIndex].tiles.includes(tileColor)) {
-        throw new Error('Final row already contains this color')
+        throw new Error('Final row already contains this color');
       }
 
       // If using the color template, the column index is predefined
       if (useColorTemplate) {
-        const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor)
+        const columnIndex = REQUIRED_ORDER[rowIndex].indexOf(tileColor);
         tileTransfers.push({
           type: TILE_TRANSFER,
           roundNumber: gameState.currentRoundNumber,
           turnNumber: null,
           params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
-        })
+        });
       } else {
         // If not using the template, identify all possible column indices given the current state
         // of final rows on this players board
@@ -263,22 +305,22 @@ function generateTileTransfers(gameState) {
           return (
             player.finalRows.every(r => r.tiles[columnIndex] !== tileColor) &&
             stagingRow[columnIndex] === null
-          )
-        })
+          );
+        });
         if (possibleColumnIndices.length === 1) {
-          const columnIndex = possibleColumnIndices[0]
+          const columnIndex = possibleColumnIndices[0];
           tileTransfers.push({
             type: TILE_TRANSFER,
             roundNumber: gameState.currentRoundNumber,
             turnNumber: null,
             params: { seatIndex: player.seatIndex, rowIndex, columnIndex, tileColor },
-          })
+          });
         }
       }
-    })
-  })
+    });
+  });
 
-  return tileTransfers
+  return tileTransfers;
 }
 
 export default {
@@ -287,11 +329,13 @@ export default {
   fetchGames,
   fetchGamesByUserId,
   startGameIfFull,
+  endGame,
   getGameState,
   saveAndApplyActions,
   isRoundOver,
+  isGameOver,
   generateTileTransfers,
   generateFactoryRefills,
   incrementRound,
   generateTileDump,
-}
+};

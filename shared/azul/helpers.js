@@ -30,6 +30,7 @@ function getInitialGameState(players, options) {
     factories: Array(GET_FACTORY_COUNT(options.numPlayers))
       .fill()
       .map(() => []),
+    isComplete: false,
     discardTiles: [],
     tableTiles: [STARTING_PLAYER],
     currentRoundNumber: null,
@@ -226,6 +227,9 @@ function applyTileTransfer(state, action) {
     draft.discardTiles = draft.discardTiles.concat(Array(rowIndex).fill(tileColor))
     draft.actionHistory = [...draft.actionHistory.slice(0, draft.historyIndex), action]
     draft.historyIndex++
+    if (!draft.isComplete && player.finalRows[rowIndex].tiles.filter(t => t === null).length === 0) {
+      draft.isComplete = true
+    } 
   })
 }
 

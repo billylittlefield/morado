@@ -1,18 +1,18 @@
-import React from 'react'
+import React from 'react';
 
-import ProfileContainer from 'components/container/ProfileContainer'
+import ProfileContainer from 'components/container/ProfileContainer';
 
 function Navbar(props) {
   if (props.location.pathname === '/login') {
-    return null
+    return null;
   }
-  
+
   return (
     <nav>
       <span className="page-title">AZUL Online</span>
       <ProfileContainer />
     </nav>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

@@ -1,15 +1,17 @@
-import React from 'react'
+import React from 'react';
 
 function TileSquare(props) {
-  const { bgClass, shouldHighlight, handleClick, hidden, id } = props
+  const { bgClass, shouldHighlight, handleClick, hidden, id } = props;
 
   return (
     <div
       id={id}
-      className={`square ${bgClass} ${shouldHighlight ? 'highlight' : ''} ${hidden ? 'hidden' : ''}`}
+      className={`square ${bgClass} ${shouldHighlight ? 'highlight' : ''} ${
+        hidden ? 'hidden' : ''
+      }`}
       onClick={handleClick}
     />
-  )
+  );
 }
 
-export default TileSquare
+export default TileSquare;

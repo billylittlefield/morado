@@ -4,8 +4,8 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prettier": "prettier --write \"**/*.js\"",
-    "prettier:check": "prettier --check \"**/*.js\""
+    "prettier:fix": "prettier --write \"{server,client,shared}/src/**/*.js\"",
+    "prettier:check": "prettier --check \"{server,client,shared}/src/**/*.js\""
   },
   "repository": {
     "type": "git",
