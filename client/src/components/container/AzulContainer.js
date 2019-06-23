@@ -74,6 +74,8 @@ class AzulContainer extends React.Component {
     });
   }
   componentWillUnmount() {
+    this.state.tileList.forEach(t => t.destroy());
+    this.setState({ tileList: [] });
     this.props.socket.emit('leaveGame', this.props.gameId);
   }
 
@@ -99,6 +101,7 @@ class AzulContainer extends React.Component {
       }
       console.log('houston we have a mismatch');
       console.log(difference(gameState, this.props.gameState));
+      debugger;
       this.props.receiveGameState({ gameState });
       this.setInitialTiles({ ...gameState });
     }
@@ -305,7 +308,7 @@ class AzulContainer extends React.Component {
   }
 
   selectTile(tile) {
-    if (!tile.isCommunalTile) {
+    if (!tile.isCommunalTile || tile.isStartingPlayer) {
       return;
     }
     if (tile.isSelected) {

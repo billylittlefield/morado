@@ -1,21 +1,18 @@
-import express from 'express';
+// import express from 'express';
+// import http from 'http';
 import session from 'express-session';
-import http from 'http';
 import redis from 'redis';
-import socketIO from 'socket.io';
 import connectRedis from 'connect-redis';
 import bodyParser from 'body-parser';
 
-const app = express();
-const server = http.Server(app);
+import app from 'express-app';
+import server from 'express-server';
 
 /**
  * Web socket services
  */
-
-const io = socketIO(server);
-import gameServiceCreator from 'services/game';
-const gameService = gameServiceCreator(io);
+import gameService from 'services/game';
+import io from 'socket-io';
 io.on('connection', gameService);
 
 /**

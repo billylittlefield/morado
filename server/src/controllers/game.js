@@ -1,6 +1,8 @@
 import db from 'db';
 import _ from 'lodash';
 
+import io from 'socket-io';
+// import gameService from 'services/game';
 import AzulHelpers from '@shared/azul/helpers';
 import { shuffle } from '@shared/util';
 import {
@@ -122,6 +124,8 @@ async function startGameIfFull(gameId) {
       .where('games.id', gameId)
       .update('start_time', new Date());
   }
+
+  io.in(`azul:${gameId}`).emit('gameActions', initialFactoryRefills);
 }
 
 async function endGame(gameId, state) {
@@ -227,14 +231,16 @@ function generateTileDump(gameState) {
   // It's _technically_ possible for no one to have pulled the starting player tile if all
   // factories were filled with homogenous tiles. The rules don't even cover this case, but for
   // the sake of fairness, let's just randomize the starting player in this scenario.
-  const firstSeatNextRound =
-    gameState.firstSeatNextRound || Math.floor(Math.random() * gameState.players.length);
+  const firstSeatNextRound = gameState.firstSeatNextRound;
   return {
     type: TILE_DUMP,
     turnNumber: null,
     roundNumber: gameState.currentRoundNumber,
     params: {
-      firstSeatNextRound,
+      firstSeatNextRound:
+        typeof firstSeatNextRound === 'number'
+          ? firstSeatNextRound
+          : Math.floor(Math.random() * gameState.players.length),
     },
   };
 }

@@ -1,4 +1,5 @@
 import GameController from 'controllers/game';
+import io from 'socket-io';
 
 function validateUser(socket) {
   const session = socket.request.session;
@@ -78,16 +79,15 @@ async function joinGame(io, socket, gameId, userInfo) {
   }
 }
 
-export default function(io) {
-  return function GameService(socket) {
-    socket.on('joinGame', gameId => {
-      const userInfo = socket.request.session.userInfo;
-      validateUser(socket);
-      joinGame(io, socket, gameId, userInfo);
-    });
 
-    socket.on('leaveGame', gameId => {
-      socket.leave(`azul:${gameId}`);
-    });
-  };
-}
+export default function GameService(socket) {
+  socket.on('joinGame', gameId => {
+    const userInfo = socket.request.session.userInfo;
+    validateUser(socket);
+    joinGame(io, socket, gameId, userInfo);
+  });
+
+  socket.on('leaveGame', gameId => {
+    socket.leave(`azul:${gameId}`);
+  });
+};
