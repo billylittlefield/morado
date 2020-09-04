@@ -32,7 +32,7 @@
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "lodash": "^4.17.11",
-    "node-sass": "4.9.4",
+    "node-sass": "4.13.1",
     "prettier": "1.14.2",
     "sass-loader": "7.1.0",
     "style-loader": "0.23.1",
