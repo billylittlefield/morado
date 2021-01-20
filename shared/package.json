@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "immer": "^2.0.0",
+    "immer": "^8.0.1",
     "lodash": "^4.17.11"
   }
 }
