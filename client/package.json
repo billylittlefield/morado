@@ -31,7 +31,7 @@
     "file-loader": "^3.0.1",
     "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.21",
     "node-sass": "4.9.4",
     "prettier": "1.14.2",
     "sass-loader": "7.1.0",
